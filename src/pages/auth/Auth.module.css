@@ -1,0 +1,430 @@
+.wrap {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: var(--color-bg);
+  position: relative;
+  overflow: hidden;
+}
+.hero {
+  position: relative;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0b3d2c 100%);
+  background-size: 200% 200%;
+  animation: ccGradientShift 14s ease infinite;
+  color: #fff;
+  padding: 56px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+}
+.hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(
+      500px 400px at 90% 10%,
+      rgba(245, 158, 11, 0.3),
+      transparent 60%
+    ),
+    radial-gradient(
+      700px 500px at 0% 100%,
+      rgba(82, 164, 71, 0.4),
+      transparent 60%
+    );
+  pointer-events: none;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 700;
+  font-size: 18px;
+  position: relative;
+  z-index: 1;
+}
+.logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(10px);
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+.heroArt {
+  position: relative;
+  z-index: 1;
+  margin: 24px 0;
+  animation: ccFloat 6s ease-in-out infinite;
+}
+.heroTitle {
+  font-size: 36px;
+  line-height: 1.1;
+  font-weight: 800;
+  max-width: 460px;
+  letter-spacing: -0.02em;
+  position: relative;
+  z-index: 1;
+}
+.heroSub {
+  margin-top: 16px;
+  max-width: 440px;
+  opacity: 0.82;
+  font-size: 16px;
+  position: relative;
+  z-index: 1;
+}
+.heroFoot {
+  font-size: 13px;
+  opacity: 0.65;
+  position: relative;
+  z-index: 1;
+}
+
+.formArea {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  padding: 48px;
+}
+.card {
+  width: 100%;
+  max-width: 480px;
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(22px) saturate(160%);
+  -webkit-backdrop-filter: blur(22px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 22px;
+  padding: 36px;
+  box-shadow:
+    0 30px 80px -20px rgba(15, 23, 42, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  animation: slideUpFade 0.5s ease both;
+  overflow: hidden;
+}
+.title {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.sub {
+  color: var(--color-muted);
+  margin-top: 6px;
+  font-size: 14px;
+}
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 22px;
+}
+.foot {
+  margin-top: 18px;
+  font-size: 13px;
+  color: var(--color-muted);
+  text-align: center;
+}
+.foot a {
+  color: var(--color-primary-dark);
+  font-weight: 700;
+}
+.error {
+  background: #fee2e2;
+  color: #991b1b;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 13px;
+  margin-top: 14px;
+}
+
+/* Login role pills */
+.roles {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.role {
+  border: 1.5px solid var(--color-border);
+  background: rgba(255, 255, 255, 0.6);
+  padding: 14px 8px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--color-text);
+  transition: all 0.25s ease;
+}
+.role:hover {
+  background: #fff;
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+}
+.roleActive {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+  color: var(--color-primary-dark);
+  box-shadow: 0 6px 16px -6px rgba(82, 164, 71, 0.4);
+}
+
+/* Stepper */
+.stepper {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 22px;
+  justify-content: center;
+}
+.stepDot {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--color-bg);
+  color: var(--color-muted);
+  border: 2px solid var(--color-border);
+  font-weight: 700;
+  font-size: 13px;
+  transition: all 0.3s ease;
+}
+.stepDotDone {
+  background: var(--color-primary);
+  color: #fff;
+  border-color: var(--color-primary);
+  box-shadow: 0 4px 14px -4px rgba(82, 164, 71, 0.6);
+}
+
+/* Step animations */
+.slideRight {
+  animation: stepSlideR 0.35s ease both;
+}
+.slideLeft {
+  animation: stepSlideL 0.35s ease both;
+}
+@keyframes stepSlideR {
+  from {
+    opacity: 0;
+    transform: translateX(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+@keyframes stepSlideL {
+  from {
+    opacity: 0;
+    transform: translateX(-40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.navRow {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 22px;
+  gap: 8px;
+}
+
+/* Role cards (multistep) */
+.roleGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 18px;
+}
+.roleCard {
+  display: grid;
+  grid-template-columns: 36px 1fr;
+  align-items: center;
+  grid-template-areas: "icon label" "icon desc";
+  column-gap: 14px;
+  text-align: left;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1.5px solid var(--color-border);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  color: var(--color-text);
+}
+.roleCard > svg {
+  grid-area: icon;
+  color: var(--color-primary-dark);
+}
+.roleCard:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+}
+.roleCardActive {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+  box-shadow: 0 10px 24px -10px rgba(82, 164, 71, 0.5);
+}
+.roleCardLabel {
+  grid-area: label;
+  font-weight: 700;
+  font-size: 15px;
+}
+.roleCardDesc {
+  grid-area: desc;
+  font-size: 13px;
+  color: var(--color-muted);
+}
+
+/* Floating label input */
+.fl {
+  position: relative;
+}
+.fl input {
+  width: 100%;
+  padding: 18px 14px 8px;
+  border: 1.5px solid var(--color-border);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.85);
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+  transition: all 0.2s ease;
+}
+.fl input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(82, 164, 71, 0.18);
+}
+.fl label {
+  position: absolute;
+  left: 14px;
+  top: 14px;
+  color: var(--color-muted);
+  font-size: 14px;
+  pointer-events: none;
+  transition: all 0.18s ease;
+}
+.flFilled label {
+  top: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-primary-dark);
+}
+
+/* Strength meter */
+.meter {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.meterTrack {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+}
+.meterBar {
+  height: 6px;
+  border-radius: 4px;
+  background: var(--color-border);
+  transition: background 0.25s;
+}
+.mb1 {
+  background: #ef4444;
+}
+.mb2 {
+  background: #f59e0b;
+}
+.mb3 {
+  background: #84cc16;
+}
+.mb4 {
+  background: var(--color-primary);
+}
+.meterLabel {
+  font-size: 12px;
+  color: var(--color-muted);
+}
+
+/* Avatar / chips */
+.fieldLabel {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--color-text);
+}
+.avatarRow {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 6px;
+}
+.avatarPick {
+  font-size: 22px;
+  padding: 8px;
+  border: 1.5px solid var(--color-border);
+  background: #fff;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.avatarPick:hover {
+  transform: translateY(-3px);
+}
+.avatarPickActive {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+  box-shadow: 0 6px 14px -6px rgba(82, 164, 71, 0.5);
+}
+.select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1.5px solid var(--color-border);
+  border-radius: 10px;
+  background: #fff;
+  font-size: 14px;
+  font-family: inherit;
+}
+.chipRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.chip {
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1.5px solid var(--color-border);
+  background: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--color-muted);
+  transition: all 0.2s ease;
+}
+.chip:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary-dark);
+}
+.chipActive {
+  background: var(--color-primary);
+  color: #fff;
+  border-color: var(--color-primary);
+}
+
+@media (max-width: 900px) {
+  .wrap {
+    grid-template-columns: 1fr;
+  }
+  .hero {
+    display: none;
+  }
+  .formArea {
+    padding: 24px;
+  }
+}

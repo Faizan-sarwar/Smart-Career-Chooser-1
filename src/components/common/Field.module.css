@@ -1,0 +1,21 @@
+.field { display: flex; flex-direction: column; gap: 6px; }
+.label { font-size: 13px; font-weight: 500; color: var(--color-text); }
+.input, .select, .textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  font-size: 14px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-family: inherit;
+  transition: border-color .15s, box-shadow .15s;
+}
+.input:focus, .select:focus, .textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(82,164,71,.2);
+}
+.textarea { min-height: 90px; resize: vertical; }
+.error { color: var(--color-danger); font-size: 12px; }
+.hint { color: var(--color-muted); font-size: 12px; }

@@ -1,0 +1,95 @@
+.tabs { display: flex; gap: 6px; border-bottom: 1px solid var(--color-border); margin-bottom: 16px; }
+.tab {
+  padding: 10px 16px; border: none; background: transparent;
+  font-size: 14px; font-weight: 500; color: var(--color-muted);
+  border-bottom: 2px solid transparent;
+  transition: color .2s ease, border-color .2s ease;
+  cursor: pointer;
+}
+.tab:hover { color: var(--color-text); }
+.tabActive { color: var(--color-primary-dark); border-bottom-color: var(--color-primary); }
+
+.chat {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  height: 600px;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--color-surface);
+  animation: ccPanelIn .35s cubic-bezier(.2,.7,.2,1) both;
+}
+.threadList { border-right: 1px solid var(--color-border); overflow-y: auto; }
+.thread {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--color-border);
+  cursor: pointer;
+  display: flex; flex-direction: column; gap: 4px;
+  transition: background .2s ease, transform .2s ease;
+}
+.thread:hover { background: var(--color-bg); transform: translateX(2px); }
+.threadActive { background: var(--color-primary-soft); }
+.threadName { font-weight: 600; font-size: 14px; display: flex; justify-content: space-between; }
+.threadLast { font-size: 12px; color: var(--color-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.unread { background: var(--color-primary); color: #fff; font-size: 11px; padding: 1px 6px; border-radius: 999px; }
+
+.messages { display: flex; flex-direction: column; }
+.msgHeader { padding: 14px 18px; border-bottom: 1px solid var(--color-border); font-weight: 600; }
+.msgList { flex: 1; padding: 16px 18px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+.msg {
+  max-width: 70%;
+  padding: 10px 12px; border-radius: 12px;
+  font-size: 14px;
+  animation: slideUpFade .22s ease both;
+}
+.msgMe { align-self: flex-end; background: var(--color-primary); color: #fff; border-bottom-right-radius: 4px; }
+.msgThem { align-self: flex-start; background: var(--color-bg); color: var(--color-text); border-bottom-left-radius: 4px; }
+.msgTime { font-size: 11px; opacity: .7; margin-top: 2px; }
+
+.composer {
+  display: flex; gap: 8px; padding: 12px;
+  border-top: 1px solid var(--color-border);
+}
+.composer input {
+  flex: 1; padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px; font-size: 14px; outline: none;
+}
+.composer input:focus { border-color: var(--color-primary); }
+
+/* Calendar */
+.cal {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  padding: 18px;
+  animation: ccPanelIn .35s cubic-bezier(.2,.7,.2,1) both;
+}
+.calHead { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+.calMonth { font-weight: 700; font-size: 18px; }
+.weekdays, .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.weekdays { font-size: 12px; color: var(--color-muted); margin-bottom: 6px; }
+.weekday { padding: 4px; text-align: center; }
+.day {
+  background: var(--color-bg);
+  border-radius: 10px;
+  padding: 10px;
+  min-height: 90px;
+  display: flex; flex-direction: column; gap: 6px;
+  border: 1px solid transparent;
+}
+.dayNum { font-size: 12px; color: var(--color-muted); }
+.dayToday { border-color: var(--color-primary); }
+.dayToday .dayNum { color: var(--color-primary-dark); font-weight: 700; }
+.event {
+  background: var(--color-primary-soft);
+  color: var(--color-primary-dark);
+  font-size: 11px; padding: 4px 6px; border-radius: 6px;
+  font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .chat { grid-template-columns: 1fr; height: 500px; }
+  .threadList { display: none; }
+  .day { min-height: 60px; padding: 6px; }
+}

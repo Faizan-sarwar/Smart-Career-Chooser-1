@@ -1,0 +1,45 @@
+.layout {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.formGrid {
+  display: grid;
+  /* Automatically adjusts to 1 column on mobile, 2 on desktop */
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+  padding: 8px 0;
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.input {
+  padding: 12px 16px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: inherit;
+  font-size: 15px;
+  transition: all 0.2s ease;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  /* Creates a soft green glow effect around the input matching your #52a447 branding */
+  box-shadow: 0 0 0 3px rgba(82, 164, 71, 0.2); 
+}

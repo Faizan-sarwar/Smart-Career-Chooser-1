@@ -1,0 +1,18 @@
+.header {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  padding: 24px;
+  display: flex; align-items: center; gap: 18px;
+}
+.avatar {
+  width: 64px; height: 64px; border-radius: 50%;
+  background: var(--color-primary-soft); color: var(--color-primary-dark);
+  display: grid; place-items: center; font-weight: 700; font-size: 22px;
+}
+.info { flex: 1; }
+.name { font-size: 20px; font-weight: 700; }
+.meta { color: var(--color-muted); font-size: 13px; }
+
+.skills { display: flex; flex-direction: column; gap: 14px; }
+.notes textarea { width: 100%; min-height: 140px; padding: 12px; border: 1px solid var(--color-border); border-radius: 10px; font-family: inherit; resize: vertical; }

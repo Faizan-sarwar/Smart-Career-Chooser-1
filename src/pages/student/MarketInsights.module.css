@@ -1,0 +1,40 @@
+.tickerWrap {
+  background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
+  background-size: 200% 200%;
+  animation: ccGradientShift 10s ease infinite;
+  border-radius: 12px;
+  padding: 12px 0;
+  overflow: hidden;
+  color: #fff;
+  box-shadow: var(--shadow-md);
+}
+.tickerInner {
+  display: flex; gap: 56px;
+  white-space: nowrap;
+  animation: tickerScroll 35s linear infinite;
+}
+.tickerItem { font-weight: 600; font-size: 14px; }
+@keyframes tickerScroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+.twoCol { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; }
+@media (max-width: 1024px) { .twoCol { grid-template-columns: 1fr; } }
+
+.trendList { display: flex; flex-direction: column; gap: 12px; }
+.trendCard {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: var(--color-bg);
+  border-left: 4px solid;
+  transition: transform .25s ease, box-shadow .25s ease;
+}
+.trendCard:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+.trendPulse {
+  width: 12px; height: 12px; border-radius: 50%;
+  animation: ccPulseRing 1.6s ease-out infinite;
+}
+.trendTitle { font-weight: 700; font-size: 14px; }
+.trendGrowth { font-size: 12px; color: var(--color-muted); margin-top: 2px; }

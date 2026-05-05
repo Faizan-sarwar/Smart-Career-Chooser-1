@@ -1,0 +1,31 @@
+.matches { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+.match {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  padding: 18px;
+  display: flex; flex-direction: column; gap: 10px;
+  transition: transform .15s, box-shadow .15s;
+}
+.match:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.matchHead { display: flex; justify-content: space-between; align-items: flex-start; }
+.matchTitle { font-weight: 700; font-size: 16px; }
+.pct {
+  font-size: 12px; font-weight: 700;
+  padding: 4px 10px; border-radius: 999px;
+  background: var(--color-primary-soft); color: var(--color-primary-dark);
+}
+.meta { display: flex; gap: 10px; font-size: 13px; color: var(--color-muted); flex-wrap: wrap; }
+.skills { display: flex; gap: 6px; flex-wrap: wrap; }
+.tag { padding: 4px 10px; border-radius: 999px; background: var(--color-bg); color: var(--color-text); font-size: 12px; }
+
+.chartCard { padding: 18px; }
+.jobs { display: flex; flex-direction: column; }
+.job {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+.job:last-child { border-bottom: none; }
+.jobTitle { font-weight: 600; font-size: 14px; }
+.jobMeta { font-size: 12px; color: var(--color-muted); }

@@ -1,0 +1,21 @@
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  box-shadow: var(--shadow-md);
+  padding: 20px;
+  animation: slideUpFade .4s ease both;
+  transition: transform .3s ease, box-shadow .3s ease, border-color .3s ease;
+}
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+  border-color: rgba(82,164,71,.35);
+}
+.head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 14px;
+  gap: 12px;
+}
+.title { font-size: 15px; font-weight: 700; color: var(--color-text); }
+.sub { color: var(--color-muted); font-size: 13px; }

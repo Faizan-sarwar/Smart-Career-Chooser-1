@@ -1,0 +1,56 @@
+.wrap { display: flex; flex-direction: column; gap: 20px; }
+.head { display: flex; justify-content: space-between; align-items: center; }
+.title { font-size: 22px; font-weight: 700; }
+.step { font-size: 13px; color: var(--color-muted); font-weight: 600; }
+
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  padding: 32px;
+  box-shadow: var(--shadow-md);
+  animation: ccFadeUp .4s ease both;
+}
+.qTitle { font-size: 22px; font-weight: 700; margin-bottom: 6px; letter-spacing: -.01em; }
+.qSub { color: var(--color-muted); margin-bottom: 24px; font-size: 14px; }
+
+.options { display: grid; gap: 10px; }
+.option {
+  display: flex; gap: 12px; align-items: center;
+  padding: 16px 18px;
+  border: 1.5px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-surface);
+  cursor: pointer;
+  font-size: 14px; font-weight: 500;
+  text-align: left;
+  color: var(--color-text);
+  transition: border-color .15s, background .15s, transform .15s;
+  animation: ccSlideIn .35s ease both;
+}
+.option:hover { background: var(--color-bg); transform: translateX(2px); }
+.optionActive {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+  box-shadow: 0 4px 12px -4px rgba(82,164,71,.35);
+}
+.radio {
+  width: 20px; height: 20px; border-radius: 50%;
+  border: 2px solid var(--color-border);
+  display: grid; place-items: center; flex-shrink: 0;
+  transition: border-color .15s;
+}
+.optionActive .radio { border-color: var(--color-primary); }
+.radioDot { width: 10px; height: 10px; border-radius: 50%; background: var(--color-primary); animation: ccPop .25s ease; }
+
+.actions { display: flex; justify-content: space-between; margin-top: 28px; gap: 10px; }
+
+.summary { display: grid; gap: 14px; margin-top: 24px; }
+.summaryRow { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--color-border); }
+.summaryRow:last-child { border-bottom: none; }
+.summaryLabel { color: var(--color-muted); }
+.summaryValue { font-weight: 600; }
+
+.celebrate { text-align: center; padding: 32px 16px; animation: ccPop .5s ease both; }
+.celebrate h2 { font-size: 28px; margin-bottom: 8px; }
+.celebrate p { color: var(--color-muted); margin-bottom: 20px; }

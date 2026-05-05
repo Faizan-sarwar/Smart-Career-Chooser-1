@@ -1,0 +1,33 @@
+.health {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.healthRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+}
+.healthLabel {
+  color: var(--color-muted);
+}
+.healthValue {
+  font-weight: 700;
+}
+.dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 6px;
+}
+.ok {
+  background: #16a34a;
+}
+.warn {
+  background: #d97706;
+}
+.err {
+  background: #dc2626;
+}

@@ -1,4 +1,4 @@
-// backend/models/User.js
+// backend/src/models/User.js
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 
@@ -13,6 +13,8 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: [true, 'Please add an email'],
       unique: true,
+      lowercase: true,
+      trim: true,
       match: [
         /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/,
         'Please add a valid email format',
@@ -22,54 +24,65 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: [true, 'Please add a password'],
       minlength: [6, 'Password must be at least 6 characters'],
-      select: false, // Do not return password by default in queries
+      select: false,
     },
     role: {
       type: String,
-      enum: ['Student', 'Mentor', 'Admin', 'President'],
-      default: 'Student',
+      enum: ['student', 'mentor', 'admin', 'president'],
+      default: 'student',
+      lowercase: true,
     },
-    // STATE PERSISTENCE: Storing the avatar securely so it survives page refreshes
     avatar: {
       type: String,
-      default: 'default-avatar.png', 
+      default: '👋',
     },
-    // Optional fields based on role
-    university: {
+    // Student-specific
+    university: { type: String },
+    educationLevel: {
       type: String,
+      enum: ['matric', 'intermediate', 'bachelors', 'masters', 'phd', 'other'],
     },
-    careerInterests: {
-      type: [String], // Array of strings (e.g., ['Web Development', 'AI'])
+    fieldOfStudy: { type: String },
+    careerInterests: { type: [String], default: [] },
+
+    // Mentor-specific
+    expertise: { type: [String], default: [] },
+    yearsOfExperience: { type: Number },
+    bio: { type: String, maxlength: 1000 },
+
+    // Cached pointer to latest assessment result so dashboard loads fast
+    latestAssessmentResult: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'AssessmentResult',
+      default: null,
+    },
+
+    // Selected primary career (set after viewing recommendations)
+    selectedCareer: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Career',
+      default: null,
     },
   },
-  {
-    timestamps: true, // Automatically adds createdAt and updatedAt fields
-  }
+  { timestamps: true }
 );
 
-// ==========================================
-// PRE-SAVE HOOK: Secure Password Hashing
-// ==========================================
-// This runs automatically before a user is saved to the database.
+// FIX: original code was missing `return` after early next(),
+// which caused the hook to fall through and re-hash on every save.
 userSchema.pre('save', async function (next) {
-  // If the password hasn't been modified, skip hashing
-  if (!this.isModified('password')) {
-    next();
+  if (!this.isModified('password')) return next();
+  try {
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
+    return next();
+  } catch (err) {
+    return next(err);
   }
-
-  // Generate salt and hash the password
-  const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password, salt);
 });
 
-// ==========================================
-// INSTANCE METHOD: Verify Password
-// ==========================================
-// This method allows us to easily compare plain text passwords with the hashed database password during login.
 userSchema.methods.matchPassword = async function (enteredPassword) {
-  return await bcrypt.compare(enteredPassword, this.password);
+  return bcrypt.compare(enteredPassword, this.password);
 };
 
 const User = mongoose.model('User', userSchema);
-
 export default User;

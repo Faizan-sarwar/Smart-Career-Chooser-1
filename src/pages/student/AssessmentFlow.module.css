@@ -1,56 +1,147 @@
-.wrap { display: flex; flex-direction: column; gap: 20px; }
-.head { display: flex; justify-content: space-between; align-items: center; }
-.title { font-size: 22px; font-weight: 700; }
-.step { font-size: 13px; color: var(--color-muted); font-weight: 600; }
+/* src/pages/student/AssessmentFlow.module.css */
 
 .card {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  background: #fff;
+  border: 1px solid #e5e7eb;
   border-radius: 16px;
   padding: 32px;
-  box-shadow: var(--shadow-md);
-  animation: ccFadeUp .4s ease both;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
-.qTitle { font-size: 22px; font-weight: 700; margin-bottom: 6px; letter-spacing: -.01em; }
-.qSub { color: var(--color-muted); margin-bottom: 24px; font-size: 14px; }
 
-.options { display: grid; gap: 10px; }
-.option {
-  display: flex; gap: 12px; align-items: center;
-  padding: 16px 18px;
-  border: 1.5px solid var(--color-border);
-  border-radius: 12px;
-  background: var(--color-surface);
+.head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 14px;
+}
+
+.title {
+  color: #111827;
+  font-weight: 600;
+}
+
+.step {
+  color: #6b7280;
+}
+
+.questionList {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin-top: 8px;
+}
+
+.questionBlock {
+  padding: 16px 0;
+  border-bottom: 1px dashed #e5e7eb;
+  opacity: 0;
+  animation: fadeUp 0.4s ease forwards;
+}
+.questionBlock:last-child {
+  border-bottom: none;
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.qText {
+  font-size: 16px;
+  color: #111827;
+  font-weight: 500;
+  margin-bottom: 12px;
+  line-height: 1.5;
+}
+
+.likertRow {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+}
+
+.likertBtn {
+  background: #f9fafb;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 10px 8px;
   cursor: pointer;
-  font-size: 14px; font-weight: 500;
-  text-align: left;
-  color: var(--color-text);
-  transition: border-color .15s, background .15s, transform .15s;
-  animation: ccSlideIn .35s ease both;
+  transition: all 0.15s ease;
+  text-align: center;
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-.option:hover { background: var(--color-bg); transform: translateX(2px); }
-.optionActive {
-  border-color: var(--color-primary);
-  background: var(--color-primary-soft);
-  box-shadow: 0 4px 12px -4px rgba(82,164,71,.35);
+
+.likertBtn:hover {
+  border-color: #16a34a;
+  background: #f0fdf4;
 }
-.radio {
-  width: 20px; height: 20px; border-radius: 50%;
-  border: 2px solid var(--color-border);
-  display: grid; place-items: center; flex-shrink: 0;
-  transition: border-color .15s;
+
+.likertBtnActive {
+  background: #16a34a;
+  border-color: #16a34a;
+  color: white;
+  box-shadow: 0 4px 12px rgba(22, 163, 74, 0.25);
 }
-.optionActive .radio { border-color: var(--color-primary); }
-.radioDot { width: 10px; height: 10px; border-radius: 50%; background: var(--color-primary); animation: ccPop .25s ease; }
 
-.actions { display: flex; justify-content: space-between; margin-top: 28px; gap: 10px; }
+.likertLabel {
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.2;
+}
 
-.summary { display: grid; gap: 14px; margin-top: 24px; }
-.summaryRow { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--color-border); }
-.summaryRow:last-child { border-bottom: none; }
-.summaryLabel { color: var(--color-muted); }
-.summaryValue { font-weight: 600; }
+.actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid #e5e7eb;
+}
 
-.celebrate { text-align: center; padding: 32px 16px; animation: ccPop .5s ease both; }
-.celebrate h2 { font-size: 28px; margin-bottom: 8px; }
-.celebrate p { color: var(--color-muted); margin-bottom: 20px; }
+.errorBox {
+  background: #fee2e2;
+  color: #991b1b;
+  padding: 12px 14px;
+  border-radius: 10px;
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.celebrate {
+  text-align: center;
+  padding: 32px 16px;
+}
+
+.celebrate h2 {
+  margin: 16px 0 0 0;
+  font-size: 28px;
+  color: #111827;
+}
+
+@media (max-width: 640px) {
+  .likertRow {
+    grid-template-columns: repeat(5, 1fr);
+    gap: 4px;
+  }
+  .likertBtn {
+    padding: 8px 4px;
+    min-height: 52px;
+  }
+  .likertLabel {
+    font-size: 10px;
+  }
+  .card {
+    padding: 20px;
+  }
+}

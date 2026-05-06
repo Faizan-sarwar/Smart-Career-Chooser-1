@@ -38,7 +38,7 @@ const ROLE_ICON = { student: GraduationCap, mentor: Compass, admin: ShieldCheck 
 export default function Sidebar({ mobileOpen, onClose }) {
   const { user } = useAuth();
   if (!user) return null;
-  
+
   // Ensure we safely map the role to lowercase to avoid crashes if formatting changes
   const safeRole = user.role?.toLowerCase() || 'student';
   const items = NAV[safeRole] || [];
@@ -69,7 +69,13 @@ export default function Sidebar({ mobileOpen, onClose }) {
       <div className={s.spacer} />
       <div className={s.foot}>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-          <RoleIcon className={s.icon} />
+          <div style={{ width: '32px', height: '32px', borderRadius: '50%', overflow: 'hidden', backgroundColor: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '12px', fontWeight: 'bold' }}>
+            {user?.avatar && user.avatar.length > 10 ? (
+              <img src={user.avatar} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+              (user?.name || "U").charAt(0).toUpperCase()
+            )}
+          </div>
           <span>{user.name}</span>
         </div>
       </div>

@@ -124,3 +124,82 @@ function timeAgo(date) {
   if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
   return new Date(date).toLocaleDateString();
 }
+export const updateProfile = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user._id);
+
+    if (user) {
+      user.name = req.body.name || user.name;
+      user.email = req.body.email || user.email;
+      user.bio = req.body.bio !== undefined ? req.body.bio : user.bio;
+      user.university = req.body.university !== undefined ? req.body.university : user.university;
+      user.location = req.body.location !== undefined ? req.body.location : user.location;
+      
+      if (req.body.avatar) {
+        user.avatar = req.body.avatar;
+      }
+
+      const updatedUser = await user.save();
+
+      res.json({
+        _id: updatedUser._id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        role: updatedUser.role,
+        avatar: updatedUser.avatar,
+        bio: updatedUser.bio,
+        university: updatedUser.university,
+        location: updatedUser.location,
+      });
+    } else {
+      res.status(404);
+      throw new Error('User not found');
+    }
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Update user password
+// @route   PUT /api/users/password
+// @access  Private
+export const updatePassword = async (req, res, next) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    // We must explicitly select the password because we set `select: false` in the model
+    const user = await User.findById(req.user._id).select('+password');
+
+    if (user && (await user.matchPassword(currentPassword))) {
+      user.password = newPassword; // The pre-save hook in User.js will hash this automatically!
+      await user.save();
+      res.json({ message: 'Password updated successfully' });
+    } else {
+      res.status(401);
+      throw new Error('Incorrect current password');
+    }
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Update user preferences/settings
+// @route   PUT /api/users/settings
+// @access  Private
+export const updateSettings = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (user) {
+      // If preferences doesn't exist yet, initialize it
+      user.preferences = { ...(user.preferences || {}), ...req.body };
+      // Mongoose requires marking mixed objects as modified
+      user.markModified('preferences'); 
+      await user.save();
+      res.json({ message: 'Settings updated successfully' });
+    } else {
+      res.status(404);
+      throw new Error('User not found');
+    }
+  } catch (error) {
+    next(error);
+  }
+};

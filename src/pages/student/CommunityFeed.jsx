@@ -154,12 +154,12 @@ export default function CommunityFeed() {
           {/* Composer */}
           <div className={s.composer}>
             <div className={s.composerHead}>
-              <div className={s.composerAvatar}>
-                {(user?.name || "U")
-                  .split(" ")
-                  .map((p) => p[0])
-                  .slice(0, 2)
-                  .join("")}
+              <div className={s.composerAvatar} style={{ overflow: 'hidden' }}>
+                {user?.avatar && user.avatar.length > 10 ? (
+                  <img src={user.avatar} alt="Me" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  (user?.name || "U").split(" ").map((p) => p[0]).slice(0, 2).join("")
+                )}
               </div>
               <Textarea
                 placeholder="Share an update, question, or insight…"
@@ -207,12 +207,12 @@ export default function CommunityFeed() {
                   style={{ animationDelay: `${i * 0.05}s` }}
                 >
                   <div className={s.head}>
-                    <div className={s.avatar}>
-                      {p.author
-                        .split(" ")
-                        .map((x) => x[0])
-                        .slice(0, 2)
-                        .join("")}
+                    <div className={s.avatar} style={{ overflow: 'hidden' }}>
+                      {p.avatar && p.avatar.length > 10 ? (
+                        <img src={p.avatar} alt={p.author} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ) : (
+                        p.author.split(" ").map((x) => x[0]).slice(0, 2).join("")
+                      )}
                     </div>
                     <div style={{ flex: 1 }}>
                       <div className={s.author}>

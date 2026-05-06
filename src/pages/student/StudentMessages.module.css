@@ -26,7 +26,7 @@
   display: grid;
   grid-template-columns: 280px 1fr;
   gap: 16px;
-  height: 640px;
+  height: 660px;
 }
 
 @media (max-width: 900px) {
@@ -37,7 +37,7 @@
 }
 
 /* =========================================================================
-   SIDEBAR
+   SIDEBAR (collapses on mobile)
    ========================================================================= */
 
 .sidebar {
@@ -50,6 +50,12 @@
   gap: 12px;
 }
 
+@media (max-width: 900px) {
+  .sidebar {
+    padding: 12px;
+  }
+}
+
 .sideTitle {
   font-size: 11px;
   text-transform: uppercase;
@@ -57,6 +63,12 @@
   font-weight: 800;
   color: var(--color-muted);
   padding: 4px 6px;
+}
+
+@media (max-width: 900px) {
+  .sideTitle {
+    display: none;
+  }
 }
 
 .contact {
@@ -83,9 +95,6 @@
 
 .contactSkeleton {
   height: 60px;
-  background: var(--color-bg);
-  border-radius: var(--radius);
-  animation: ccShimmer 1.4s ease-in-out infinite;
   background: linear-gradient(
     90deg,
     var(--color-border) 0%,
@@ -93,6 +102,8 @@
     var(--color-border) 100%
   );
   background-size: 200% 100%;
+  border-radius: var(--radius);
+  animation: ccShimmer 1.4s ease-in-out infinite;
 }
 
 .avatar {
@@ -125,6 +136,17 @@
   margin-top: 2px;
 }
 
+/* Online indicator dot */
+.onlineDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--color-success);
+  border: 2px solid var(--color-surface);
+  box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.25);
+  flex-shrink: 0;
+}
+
 .lockedNote {
   margin-top: auto;
   padding: 12px 14px;
@@ -135,6 +157,12 @@
   color: var(--color-muted);
   text-align: center;
   line-height: 1.5;
+}
+
+@media (max-width: 900px) {
+  .lockedNote {
+    display: none;
+  }
 }
 
 /* =========================================================================
@@ -148,6 +176,7 @@
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   overflow: hidden;
+  min-height: 580px;
 }
 
 .chatHead {
@@ -174,10 +203,10 @@
 .list {
   flex: 1;
   min-height: 380px;
-  padding: 20px;
+  padding: 20px 20px 12px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
   overflow-y: auto;
   scroll-behavior: smooth;
   background:
@@ -218,6 +247,62 @@
   animation: ccSpin 0.9s linear infinite;
 }
 
+.retryFetchBtn {
+  margin-top: 14px;
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.18s ease;
+}
+
+.retryFetchBtn:hover {
+  background: var(--color-primary-dark);
+}
+
+/* =========================================================================
+   DAY SEPARATORS
+   ========================================================================= */
+
+.daySep {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 14px 0 6px;
+  text-align: center;
+}
+
+.daySep::before,
+.daySep::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--color-border);
+}
+
+.daySep span {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 3px 12px;
+  background: var(--color-surface);
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-border);
+}
+
+/* =========================================================================
+   MESSAGE BUBBLES
+   ========================================================================= */
+
 .msg {
   max-width: 70%;
   padding: 10px 14px;
@@ -225,6 +310,12 @@
   font-size: 14px;
   animation: slideUpFade 0.25s var(--ease-out) both;
   line-height: 1.5;
+  word-wrap: break-word;
+}
+
+.msgText {
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .msgMe {
@@ -247,18 +338,80 @@
   border-bottom-left-radius: 4px;
 }
 
+.msgPending {
+  opacity: 0.7;
+}
+
 .msgFailed {
   background: var(--color-danger-soft) !important;
   color: var(--color-danger) !important;
-  border: 1px solid rgba(220, 38, 38, 0.2) !important;
+  border: 1px solid rgba(220, 38, 38, 0.25) !important;
   box-shadow: none !important;
+}
+
+.msgFoot {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  justify-content: flex-end;
+}
+
+.msgThem .msgFoot {
+  justify-content: flex-start;
 }
 
 .time {
   font-size: 10px;
   opacity: 0.75;
-  margin-top: 4px;
+  font-variant-numeric: tabular-nums;
 }
+
+/* Read receipt checkmark — single check = sent, double = read */
+.readMark {
+  opacity: 0.55;
+  transition: all 0.2s ease;
+}
+
+.readMarkSeen {
+  opacity: 1;
+  color: #5eead4; /* light teal — pops on the dark bubble */
+}
+
+/* Inline retry for failed messages */
+.retryBtn {
+  background: rgba(220, 38, 38, 0.1);
+  border: 1px solid rgba(220, 38, 38, 0.3);
+  color: var(--color-danger);
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.retryBtn:hover:not(:disabled) {
+  background: var(--color-danger);
+  color: white;
+}
+
+.retryBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.spin {
+  animation: ccSpin 0.8s linear infinite;
+}
+
+/* =========================================================================
+   COMPOSER
+   ========================================================================= */
 
 .composer {
   display: flex;
@@ -267,9 +420,10 @@
   border-top: 1px solid var(--color-border);
   background: rgba(255, 255, 255, 0.6);
   backdrop-filter: blur(10px);
+  align-items: flex-end;
 }
 
-.composer input {
+.composer textarea {
   flex: 1;
   padding: 12px 16px;
   border: 1.5px solid var(--color-border);
@@ -279,12 +433,26 @@
   background: var(--color-surface);
   font-family: inherit;
   color: var(--color-text);
-  transition: all 0.2s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  resize: none;
+  line-height: 1.45;
+  min-height: 44px;
+  max-height: 120px;
+  overflow-y: auto;
 }
 
-.composer input:focus {
+.composer textarea:focus {
   border-color: var(--color-primary);
   box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
+}
+
+.composer textarea::placeholder {
+  color: var(--color-muted-light);
+}
+
+.composer textarea:disabled {
+  background: var(--color-bg);
+  cursor: not-allowed;
 }
 
 .sendBtn {
@@ -295,13 +463,15 @@
   );
   color: white;
   border: none;
-  padding: 0 18px;
+  width: 44px;
+  height: 44px;
   border-radius: var(--radius);
   cursor: pointer;
   transition: all 0.18s ease;
   display: grid;
   place-items: center;
   box-shadow: 0 4px 10px -3px rgba(13, 148, 136, 0.4);
+  flex-shrink: 0;
 }
 
 .sendBtn:hover:not(:disabled) {
@@ -309,11 +479,12 @@
   box-shadow: 0 6px 14px -3px rgba(13, 148, 136, 0.5);
 }
 
-.sendBtn:active {
+.sendBtn:active:not(:disabled) {
   transform: scale(0.96);
 }
 
 .sendBtn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+  box-shadow: none;
 }

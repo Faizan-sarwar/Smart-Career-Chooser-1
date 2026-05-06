@@ -2,75 +2,40 @@
 
 .shell {
   display: flex;
-  height: 100vh; /* Locks the app to exactly the window height */
+  height: 100vh;
   width: 100vw;
-  overflow: hidden; /* Kills the global browser scroll */
-  background: var(--color-bg); /* Uses your global background color */
+  overflow: hidden;
+  background: var(--color-bg);
 }
-
-/* =========================================================================
-   SIDEBAR — fixed-height with scrollable nav
-   ========================================================================= */
 
 .sidebar {
-  background: linear-gradient(
-    180deg,
-    var(--color-primary-darker) 0%,
-    var(--color-primary-dark) 50%,
-    var(--color-primary) 100%
-  );
-  color: white;
+  width: 260px;
+  background-color: var(--color-surface);
+  border-right: 1px solid var(--color-border);
   display: flex;
   flex-direction: column;
-  position: sticky;
-  top: 0;
-  height: 100vh;
-  overflow: hidden;
-  position: relative;
-}
-
-/* Decorative background pattern */
-.sidebar::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(
-      circle at 90% 10%,
-      rgba(249, 115, 22, 0.18) 0%,
-      transparent 40%
-    ),
-    radial-gradient(
-      circle at 10% 90%,
-      rgba(20, 184, 166, 0.15) 0%,
-      transparent 50%
-    );
-  pointer-events: none;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 30;
 }
 
 .brand {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 18px 20px 14px;
+  padding: 20px 20px 16px;
   position: relative;
-  z-index: 1;
   flex-shrink: 0;
 }
 
 .brandLogo {
-  width: 38px;
-  height: 38px;
+  width: 34px;
+  height: 34px;
   border-radius: var(--radius-sm);
-  background: linear-gradient(
-    135deg,
-    var(--color-accent) 0%,
-    var(--color-accent-dark) 100%
-  );
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
   display: grid;
   place-items: center;
   color: white;
-  box-shadow: var(--shadow-glow-coral);
+  box-shadow: 0 4px 12px var(--color-primary-faint);
   flex-shrink: 0;
 }
 
@@ -82,26 +47,26 @@
 }
 
 .brandName {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 800;
-  color: white;
+  color: var(--color-text);
   letter-spacing: -0.02em;
   line-height: 1.2;
 }
 
 .brandTag {
   font-size: 10px;
-  color: rgba(255, 255, 255, 0.7);
-  font-weight: 500;
+  color: var(--color-primary);
+  font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
 }
 
 .sidebarClose {
   display: none;
-  background: rgba(255, 255, 255, 0.15);
-  border: none;
-  color: white;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
   width: 32px;
   height: 32px;
   border-radius: 50%;
@@ -111,117 +76,72 @@
 }
 
 .portalLabel {
-  font-size: 10px;
-  font-weight: 800;
+  font-size: 11px;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.14em;
-  color: rgba(255, 255, 255, 0.55);
-  padding: 0 20px 6px;
-  position: relative;
-  z-index: 1;
+  letter-spacing: 0.1em;
+  color: var(--color-muted);
+  padding: 8px 20px;
   flex-shrink: 0;
 }
 
-/* CRITICAL: nav scrolls if content exceeds available space */
 .nav {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding: 0 12px 12px;
+  gap: 4px;
+  padding: 4px 12px 12px;
   overflow-y: auto;
   overflow-x: hidden;
-  position: relative;
-  z-index: 1;
-  min-height: 0; /* allows flex child to actually scroll */
+  min-height: 0;
 }
 
-.nav::-webkit-scrollbar {
-  width: 4px;
-}
-.nav::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
-  border: none;
-  border-radius: 4px;
-}
+.nav::-webkit-scrollbar { width: 4px; }
+.nav::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 4px; }
 
 .navItem {
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 10px 14px;
-  border-radius: var(--radius);
-  color: rgba(255, 255, 255, 0.78);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-soft);
   font-size: 14px;
   font-weight: 500;
   text-decoration: none;
-  transition: all 0.18s var(--ease-out);
-  position: relative;
+  transition: all 0.15s ease;
   flex-shrink: 0;
 }
 
 .navItem:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
+  background: var(--color-bg);
+  color: var(--color-text);
 }
 
 .navItemActive {
-  background: rgba(255, 255, 255, 0.18);
-  color: white;
+  background: var(--color-primary-faint);
+  color: var(--color-primary);
   font-weight: 600;
 }
 
-.navItemActive::before {
-  content: "";
-  position: absolute;
-  left: -12px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 3px;
-  height: 60%;
-  background: var(--color-accent);
-  border-radius: 0 2px 2px 0;
-  box-shadow: 0 0 12px var(--color-accent);
-}
-
-/* CRITICAL: footer locked at bottom, never overflows */
 .sidebarFoot {
-  padding: 12px;
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
-  position: relative;
-  z-index: 1;
+  padding: 16px;
+  border-top: 1px solid var(--color-border);
   flex-shrink: 0;
 }
 
 .userMini {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 8px 10px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: var(--radius);
-  backdrop-filter: blur(8px);
-}
-
-.userAvatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: linear-gradient(
-    135deg,
-    var(--color-accent) 0%,
-    var(--color-accent-dark) 100%
-  );
-  color: white;
-  display: grid;
-  place-items: center;
-  font-weight: 700;
-  font-size: 12px;
-  flex-shrink: 0;
+  gap: 12px;
+  padding: 8px 12px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
 }
 
 .userName {
-  color: white;
+  color: var(--color-text);
   font-size: 13px;
   font-weight: 600;
   white-space: nowrap;
@@ -230,15 +150,37 @@
 }
 
 .userRole {
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--color-muted);
   font-size: 11px;
   text-transform: capitalize;
+}
+
+/* 🚨 CRITICAL FIX: FORCES UPLOADED IMAGES TO BE PERFECT CIRCLES 🚨 */
+.userAvatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 12px;
+  flex-shrink: 0;
+  overflow: hidden; /* Clips the rectangle */
+}
+
+.userAvatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* Prevents stretching */
 }
 
 .logoutBtn {
   background: transparent;
   border: none;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--color-muted);
   cursor: pointer;
   padding: 6px;
   border-radius: 6px;
@@ -249,19 +191,17 @@
 }
 
 .logoutBtn:hover {
-  background: rgba(255, 255, 255, 0.15);
-  color: white;
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
 }
 
-/* =========================================================================
-   MAIN AREA
-   ========================================================================= */
-
+/* MAIN AREA */
 .main {
-  flex: 1; /* Takes up all remaining space to the right of the sidebar */
+  flex: 1;
   height: 100vh;
-  overflow-y: auto; /* ONLY this specific container is allowed to scroll! */
+  overflow-y: auto;
   position: relative;
+  background: var(--color-bg);
 }
 
 .topbar {
@@ -269,9 +209,8 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 14px 28px;
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(12px);
+  padding: 12px 28px;
+  background: var(--color-surface);
   border-bottom: 1px solid var(--color-border);
   position: sticky;
   top: 0;
@@ -280,97 +219,71 @@
 
 .search {
   flex: 1;
-  max-width: 540px;
+  max-width: 480px;
   display: flex;
   align-items: center;
   gap: 10px;
   background: var(--color-bg);
-  border: 1.5px solid var(--color-border);
-  border-radius: var(--radius);
-  padding: 0 14px;
-  height: 42px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  padding: 0 16px;
+  height: 40px;
   transition: all 0.2s ease;
 }
 
 .search:focus-within {
   border-color: var(--color-primary);
-  background: white;
-  box-shadow: 0 0 0 4px rgba(13, 148, 136, 0.1);
+  background: var(--color-surface);
+  box-shadow: 0 0 0 3px var(--color-primary-faint);
 }
 
-.search svg {
-  color: var(--color-muted);
-  flex-shrink: 0;
-}
+.search svg { color: var(--color-muted); flex-shrink: 0; }
+.search input { border: none; background: transparent; padding: 0; font-size: 14px; outline: none; width: 100%; color: var(--color-text); }
 
-.search input {
-  border: none;
-  background: transparent;
-  padding: 0;
-  font-size: 14px;
-  outline: none;
-  width: 100%;
-  color: var(--color-text);
-}
-
-.search input::placeholder {
-  color: var(--color-muted-light);
-}
-
-.topbarRight {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
+.topbarRight { display: flex; align-items: center; gap: 16px; }
 
 .iconBtn {
   position: relative;
-  background: var(--color-bg);
-  border: 1.5px solid var(--color-border);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   width: 40px;
   height: 40px;
-  border-radius: var(--radius);
+  border-radius: 50%;
   cursor: pointer;
   display: grid;
   place-items: center;
   color: var(--color-text-soft);
-  transition: all 0.18s ease;
+  transition: all 0.15s ease;
 }
 
 .iconBtn:hover {
-  border-color: var(--color-primary);
-  background: var(--color-primary-faint);
-  color: var(--color-primary-dark);
+  background: var(--color-bg);
+  color: var(--color-text);
 }
 
 .notifDot {
   position: absolute;
-  top: 9px;
-  right: 9px;
-  width: 9px;
-  height: 9px;
+  top: 8px; right: 8px;
+  width: 10px; height: 10px;
   border-radius: 50%;
-  background: var(--color-accent);
+  background: var(--color-danger);
   border: 2px solid var(--color-surface);
-  animation: ccPulseRing 1.6s ease-out infinite;
-  color: var(--color-accent);
 }
 
 .userBlock {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 4px 4px 4px 12px;
-  background: var(--color-bg);
-  border: 1.5px solid var(--color-border);
+  gap: 12px;
+  padding: 4px 4px 4px 14px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-full);
-  transition: all 0.18s ease;
+  transition: all 0.15s ease;
   cursor: pointer;
 }
 
 .userBlock:hover {
-  border-color: var(--color-primary-soft);
-  background: var(--color-primary-faint);
+  background: var(--color-bg);
 }
 
 .userBlockText {
@@ -380,56 +293,58 @@
   line-height: 1.15;
 }
 
-.userBlockName {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--color-text);
-}
+.userBlockName { font-size: 13px; font-weight: 600; color: var(--color-text); }
+.userBlockRole { font-size: 11px; color: var(--color-muted); text-transform: capitalize; }
 
-.userBlockRole {
-  font-size: 11px;
-  color: var(--color-muted);
-  text-transform: capitalize;
-}
-
+/* 🚨 CRITICAL FIX FOR TOPBAR AVATAR 🚨 */
 .userBlockAvatar {
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  background: linear-gradient(
-    135deg,
-    var(--color-primary) 0%,
-    var(--color-primary-darker) 100%
-  );
+  background: var(--color-primary);
   color: white;
-  font-weight: 700;
+  font-weight: 600;
   font-size: 12px;
-  display: grid;
-  place-items: center;
-  box-shadow: var(--shadow-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden; /* Clips the rectangle */
 }
 
-.content {
-  padding: 24px 28px;
-  flex: 1;
-  min-width: 0;
+.userBlockAvatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
+.content { padding: 24px 28px; flex: 1; min-width: 0; }
+
+@media (max-width: 900px) {
+  .shell { grid-template-columns: 1fr; }
+  .sidebar { position: fixed; top: 0; left: 0; width: 280px; transform: translateX(-100%); transition: transform 0.3s var(--ease-out); z-index: 20; }
+  .sidebarOpen { transform: translateX(0); box-shadow: var(--shadow-xl); }
+  .sidebarClose { display: grid; }
+  .mobileMenuBtn { display: flex; }
+  .scrim { display: block; }
+  .topbar { padding-left: 70px; }
+  .userBlockText { display: none; }
+  .content { padding: 18px; }
+}
 /* =========================================================================
-   MOBILE
+   MOBILE OVERLAYS (Hidden on Desktop)
    ========================================================================= */
 
 .mobileMenuBtn {
-  display: none;
+  display: none; /* 🚨 Hides it on desktop! 🚨 */
   position: fixed;
   top: 16px;
   left: 16px;
-  z-index: 20;
+  z-index: 40;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   width: 42px;
   height: 42px;
-  border-radius: var(--radius);
+  border-radius: var(--radius-sm);
   cursor: pointer;
   align-items: center;
   justify-content: center;
@@ -438,64 +353,10 @@
 }
 
 .scrim {
-  display: none;
+  display: none; /* 🚨 Hides the dark background overlay on desktop 🚨 */
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 19;
-  animation: fadeIn 0.2s ease;
-}
-
-@media (max-width: 900px) {
-  .shell {
-    grid-template-columns: 1fr;
-  }
-
-  .sidebar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 280px;
-    transform: translateX(-100%);
-    transition: transform 0.3s var(--ease-out);
-    z-index: 20;
-  }
-
-  .sidebarOpen {
-    transform: translateX(0);
-    box-shadow: var(--shadow-xl);
-  }
-
-  .sidebarClose {
-    display: grid;
-  }
-
-  .mobileMenuBtn {
-    display: flex;
-  }
-
-  .scrim {
-    display: block;
-  }
-
-  .topbar {
-    padding-left: 70px;
-  }
-
-  .userBlockText {
-    display: none;
-  }
-
-  .content {
-    padding: 18px;
-  }
-}
-
-@media (max-width: 600px) {
-  .topbar {
-    padding-right: 16px;
-  }
-  .search {
-    max-width: none;
-  }
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(2px);
+  z-index: 25;
 }

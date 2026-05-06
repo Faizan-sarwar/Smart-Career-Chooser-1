@@ -3,74 +3,101 @@
    Palette: Teal + Coral + Cream
    ========================================================================= */
 
+/* 1. LIGHT MODE (Default) */
 :root {
-  /* ── PRIMARY: Deep Teal ─────────────────────────────────────────────── */
-  --color-primary: #0d9488; /* teal-600 */
-  --color-primary-dark: #0f766e; /* teal-700 */
-  --color-primary-darker: #115e59; /* teal-800 */
-  --color-primary-light: #14b8a6; /* teal-500 */
-  --color-primary-soft: #ccfbf1; /* teal-100 */
-  --color-primary-faint: #f0fdfa; /* teal-50  */
+  /* ── PRIMARY: Electric Indigo ───────────────────────────────────────── */
+  --color-primary: #4f46e5; /* indigo-600 */
+  --color-primary-dark: #4338ca; /* indigo-700 */
+  --color-primary-darker: #3730a3; /* indigo-800 */
+  --color-primary-light: #6366f1; /* indigo-500 */
+  --color-primary-soft: #e0e7ff; /* indigo-100 */
+  --color-primary-faint: #eef2ff; /* indigo-50  */
 
-  /* ── ACCENT: Warm Coral ─────────────────────────────────────────────── */
-  --color-accent: #f97316; /* orange-500 */
-  --color-accent-dark: #ea580c; /* orange-600 */
-  --color-accent-light: #fb923c; /* orange-400 */
-  --color-accent-soft: #ffedd5; /* orange-100 */
-  --color-accent-faint: #fff7ed; /* orange-50  */
+  /* ── ACCENT: Sky Blue ───────────────────────────────────────────────── */
+  --color-accent: #0284c7;
+  --color-accent-dark: #0369a1;
+  --color-accent-light: #38bdf8;
+  --color-accent-soft: #e0f2fe;
+  --color-accent-faint: #f0f9ff;
 
-  /* ── NEUTRALS ───────────────────────────────────────────────────────── */
-  --color-bg: #fafaf9; /* warm off-white background */
-  --color-surface: #ffffff; /* card surfaces — pure white for contrast */
-  --color-surface-alt: #fefdfb; /* alternate cream surface */
-  --color-border: #e7e5e4; /* warm gray border */
-  --color-border-strong: #d6d3d1;
-  --color-text: #1c1917; /* stone-900 — softer than black */
-  --color-text-soft: #44403c; /* stone-700 */
-  --color-muted: #78716c; /* stone-500 */
-  --color-muted-light: #a8a29e; /* stone-400 */
+  /* ── NEUTRALS: Clean Slate ──────────────────────────────────────────── */
+  --color-bg: #f8fafc; /* slate-50 - Ultra clean background */
+  --color-surface: #ffffff; /* Pure white cards */
+  --color-surface-alt: #f1f5f9; /* slate-100 */
+  --color-border: #e2e8f0; /* slate-200 */
+  --color-border-strong: #cbd5e1; /* slate-300 */
+  --color-text: #0f172a; /* slate-900 - Sharp text */
+  --color-text-soft: #334155; /* slate-700 */
+  --color-muted: #64748b; /* slate-500 */
+  --color-muted-light: #94a3b8; /* slate-400 */
 
   /* ── SEMANTIC ───────────────────────────────────────────────────────── */
-  --color-success: #16a34a;
-  --color-success-soft: #dcfce7;
-  --color-warning: #eab308;
-  --color-warning-soft: #fef9c3;
-  --color-danger: #dc2626;
+  --color-success: #10b981;
+  --color-success-soft: #d1fae5;
+  --color-warning: #f59e0b;
+  --color-warning-soft: #fef3c7;
+  --color-danger: #ef4444;
   --color-danger-soft: #fee2e2;
-  --color-info: #0284c7;
-  --color-info-soft: #e0f2fe;
+  --color-info: #3b82f6;
+  --color-info-soft: #dbeafe;
 
-  /* ── SHADOWS ────────────────────────────────────────────────────────── */
-  --shadow-xs: 0 1px 2px rgba(28, 25, 23, 0.04);
-  --shadow-sm:
-    0 1px 3px rgba(28, 25, 23, 0.06), 0 1px 2px rgba(28, 25, 23, 0.04);
-  --shadow-md:
-    0 4px 12px -2px rgba(28, 25, 23, 0.08),
-    0 2px 6px -2px rgba(28, 25, 23, 0.05);
-  --shadow-lg:
-    0 12px 32px -8px rgba(28, 25, 23, 0.12),
-    0 4px 12px -4px rgba(28, 25, 23, 0.06);
-  --shadow-xl: 0 24px 48px -12px rgba(28, 25, 23, 0.18);
-  --shadow-glow: 0 16px 40px -12px rgba(13, 148, 136, 0.45);
-  --shadow-glow-coral: 0 12px 32px -10px rgba(249, 115, 22, 0.5);
-
-  /* ── RADII ──────────────────────────────────────────────────────────── */
-  --radius-sm: 8px;
-  --radius: 12px;
-  --radius-md: 14px;
-  --radius-lg: 18px;
-  --radius-xl: 24px;
+  --radius-sm: 6px;
+  --radius: 10px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
   --radius-full: 9999px;
 
-  /* ── TYPOGRAPHY ─────────────────────────────────────────────────────── */
   --font-sans:
     "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-display:
     "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-
-  /* ── TRANSITIONS ────────────────────────────────────────────────────── */
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+}
+
+/* 2. DARK MODE (Activated by Context) */
+[data-theme="dark"] {
+  /* ── PRIMARY: Brightened for Dark Mode ──────────────────────────────── */
+  --color-primary: #6366f1; /* Bright Indigo */
+  --color-primary-dark: #818cf8;
+  --color-primary-darker: #a5b4fc;
+  --color-primary-light: #4f46e5;
+  --color-primary-soft: #312e81; /* Deep indigo for subtle backgrounds */
+  --color-primary-faint: #1e1b4b;
+
+  /* ── ACCENT ─────────────────────────────────────────────────────────── */
+  --color-accent: #38bdf8;
+  --color-accent-dark: #7dd3fc;
+  --color-accent-soft: #0c4a6e;
+  --color-accent-faint: #082f49;
+
+  /* ── NEUTRALS: Deep OLED Zinc ───────────────────────────────────────── */
+  --color-bg: #09090b; /* zinc-950 - True OLED black */
+  --color-surface: #18181b; /* zinc-900 - Slightly elevated elements */
+  --color-surface-alt: #27272a; /* zinc-800 */
+  --color-border: #27272a; /* Subtle dark borders */
+  --color-border-strong: #3f3f46;
+  --color-text: #fafafa; /* Pure white text */
+  --color-text-soft: #e4e4e7; /* zinc-200 */
+  --color-muted: #a1a1aa; /* zinc-400 */
+  --color-muted-light: #71717a; /* zinc-500 */
+
+  /* ── SEMANTIC ───────────────────────────────────────────────────────── */
+  --color-success: #10b981;
+  --color-success-soft: #064e3b;
+  --color-warning: #fbbf24;
+  --color-warning-soft: #78350f;
+  --color-danger: #ef4444;
+  --color-danger-soft: #7f1d1d;
+  --color-info: #38bdf8;
+  --color-info-soft: #0c4a6e;
+
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.5);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.8);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 1);
 }
 
 /* =========================================================================
@@ -95,10 +122,24 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  transition:
+    background-color 0.3s var(--ease-out),
+    color 0.3s var(--ease-out); /* SMOOTH THEME SWITCHING */
 }
 
 #root {
   min-height: 100vh;
+}
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+a:hover {
+  color: var(--color-primary-dark);
+}
+button {
+  font-family: inherit;
 }
 
 a {
@@ -126,11 +167,28 @@ h4,
 h5,
 h6 {
   margin: 0;
-  font-family: var(--font-display);
   color: var(--color-text);
   font-weight: 700;
   letter-spacing: -0.02em;
   line-height: 1.2;
+}
+h1 {
+  font-size: 32px;
+  letter-spacing: -0.03em;
+}
+h2 {
+  font-size: 26px;
+}
+h3 {
+  font-size: 20px;
+}
+h4 {
+  font-size: 17px;
+}
+p {
+  margin: 0;
+  color: var(--color-text-soft);
+  line-height: 1.65;
 }
 
 h1 {
@@ -167,20 +225,16 @@ code {
    ========================================================================= */
 
 ::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
 }
-
 ::-webkit-scrollbar-track {
   background: transparent;
 }
-
 ::-webkit-scrollbar-thumb {
   background: var(--color-border-strong);
   border-radius: 6px;
-  border: 2px solid var(--color-bg);
 }
-
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-muted-light);
 }
@@ -196,11 +250,11 @@ select {
   font-size: 14px;
   color: var(--color-text);
   background: var(--color-surface);
-  border: 1.5px solid var(--color-border);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius);
-  padding: 11px 14px;
+  padding: 10px 14px;
   outline: none;
-  transition: all 0.18s var(--ease-out);
+  transition: all 0.2s var(--ease-out);
   width: 100%;
 }
 

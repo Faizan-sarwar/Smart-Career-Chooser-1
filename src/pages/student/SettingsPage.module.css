@@ -1,0 +1,38 @@
+.head { margin-bottom: 4px; }
+.head h2 { font-size: 24px; letter-spacing: -.01em; }
+.head p { color: var(--color-muted); }
+.cardTitle { display: inline-flex; align-items: center; gap: 8px; }
+.stack { display: flex; flex-direction: column; gap: 6px; }
+.row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 4px;
+  border-bottom: 1px dashed var(--color-border);
+}
+.row:last-of-type { border-bottom: none; }
+.rowLabel { font-weight: 600; font-size: 14px; }
+.rowHint { font-size: 12px; color: var(--color-muted); margin-top: 2px; }
+.toggle {
+  width: 44px; height: 26px; border-radius: 999px;
+  background: var(--color-border); border: none; cursor: pointer;
+  position: relative; transition: background .2s ease;
+}
+.toggle .knob {
+  position: absolute; top: 3px; left: 3px;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: #fff; box-shadow: var(--shadow-sm);
+  transition: transform .22s cubic-bezier(.2,.7,.2,1);
+}
+.toggleOn { background: var(--color-primary); }
+.toggleOn .knob { transform: translateX(18px); }
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.actions { grid-column: 1 / -1; display: flex; align-items: center; gap: 12px; margin-top: 6px; }
+.saved { color: var(--color-primary-dark); font-weight: 600; font-size: 13px; }
+.danger {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: 14px; border-radius: 12px;
+  background: color-mix(in oklab, var(--color-danger) 8%, transparent);
+  border: 1px solid color-mix(in oklab, var(--color-danger) 25%, transparent);
+}
+@media (max-width: 720px) {
+  .grid { grid-template-columns: 1fr; }
+}

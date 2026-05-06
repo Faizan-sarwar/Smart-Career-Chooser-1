@@ -24,6 +24,9 @@ import MarketInsights from "./pages/student/MarketInsights.jsx";
 import SkillRoadmap from "./pages/student/SkillRoadmap.jsx";
 import CommunityHub from "./pages/student/CommunityHub.jsx";
 import StudentMessages from "./pages/student/StudentMessages.jsx";
+import ProfilePage from "./pages/student/ProfilePage.jsx";
+import SettingsPage from "./pages/student/SettingsPage.jsx";
+import NotificationsPage from "./pages/student/NotificationsPage.jsx";
 
 import MentorDashboard from "./pages/mentor/MentorDashboard.jsx";
 import MenteeDetail from "./pages/mentor/MenteeDetail.jsx";
@@ -50,6 +53,7 @@ function Router() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
 
+
       <Route element={<ProtectedRoute role="student"><AppShell /></ProtectedRoute>}>
         <Route path="/student/dashboard" element={<StudentDashboard />} />
         <Route path="/student/assessment" element={<AssessmentFlow />} />
@@ -59,6 +63,9 @@ function Router() {
         <Route path="/student/community" element={<CommunityFeed />} />
         <Route path="/student/hub" element={<CommunityHub />} />
         <Route path="/student/messages" element={<StudentMessages />} />
+        <Route path="/student/profile" element={<ProfilePage />} />
+        <Route path="/student/settings" element={<SettingsPage />} />
+        <Route path="/student/notifications" element={<NotificationsPage />} />
       </Route>
 
       <Route element={<ProtectedRoute role="mentor"><AppShell /></ProtectedRoute>}>

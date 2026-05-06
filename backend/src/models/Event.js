@@ -9,11 +9,13 @@ const eventSchema = new mongoose.Schema(
     when: { type: Date, required: true },
     tag: {
       type: String,
-      enum: ['Webinar', 'Workshop', 'AMA', 'Live', 'Networking'],
+      enum: ['Webinar', 'Workshop', 'AMA', 'Live', 'Networking', 'WEBINAR'],
       default: 'Webinar',
     },
     isLive: { type: Boolean, default: false },
     coverColor: { type: String, default: '#0d9488' },
+    imageUrl: { type: String, default: '' },
+    link: { type: String, default: '' },
     rsvps: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   },
   { timestamps: true }

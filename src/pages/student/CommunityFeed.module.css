@@ -168,8 +168,9 @@
   border-radius: var(--radius-md);
   padding: 20px;
   opacity: 0;
-  animation: slideUpFade 0.4s var(--ease-out) forwards;
-  transition: all 0.25s var(--ease-out);
+  /* FIX: Change to standard ease-out */
+  animation: slideUpFade 0.4s ease-out forwards;
+  transition: all 0.25s ease-out;
 }
 
 .post:hover {
@@ -299,4 +300,91 @@
 
 .cloudTag:hover {
   background: var(--color-primary-soft);
+}
+@keyframes slideUpFade {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+/* =========================================================================
+   COMMENTS SECTION
+   ========================================================================= */
+
+.commentsSection {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--color-border);
+  animation: slideDownFade 0.2s var(--ease-out);
+}
+
+.commentList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 200px;
+  overflow-y: auto;
+  margin-bottom: 12px;
+}
+
+.commentItem {
+  background: var(--color-bg);
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+}
+
+.commentItem strong {
+  color: var(--color-text);
+}
+
+.commentTime {
+  color: var(--color-muted-light);
+  font-size: 11px;
+  margin-left: 6px;
+}
+
+.commentItem p {
+  margin-top: 4px;
+  color: var(--color-text-soft);
+  line-height: 1.4;
+}
+
+.commentInputRow {
+  display: flex;
+  gap: 8px;
+}
+
+.commentInputRow input {
+  flex: 1;
+  border-radius: var(--radius-full);
+  padding: 8px 16px;
+  border: 1px solid var(--color-border);
+  font-size: 13px;
+}
+
+.commentInputRow button {
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.commentInputRow button:disabled {
+  background: var(--color-muted-light);
+  cursor: not-allowed;
+}
+
+.commentInputRow button:hover:not(:disabled) {
+  background: var(--color-primary-dark);
 }

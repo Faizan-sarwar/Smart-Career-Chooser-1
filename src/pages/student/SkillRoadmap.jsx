@@ -237,9 +237,7 @@ export default function SkillRoadmap() {
               </div>
               <div>
                 <h2>{openMilestone.name}</h2>
-                {openMilestone.description && (
-                  <p>{openMilestone.description}</p>
-                )}
+                {openMilestone.description && <p>{openMilestone.description}</p>}
               </div>
             </div>
 
@@ -251,14 +249,14 @@ export default function SkillRoadmap() {
                     <div className={s.courseIcon}>
                       <BookOpen size={16} />
                     </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
+                    <div className={s.courseInfo}>
                       <div className={s.courseTitle}>{c.title}</div>
                       <div className={s.courseMeta}>
-                        <span>{c.provider}</span>
+                        <span className={s.courseProvider}>{c.provider}</span>
                         {c.hours > 0 && (
                           <>
                             <span className={s.dot}>·</span>
-                            <span>
+                            <span className={s.courseHours}>
                               <Clock size={11} /> {c.hours}h
                             </span>
                           </>
@@ -266,16 +264,18 @@ export default function SkillRoadmap() {
                         {c.isFree && <span className={s.freeTag}>FREE</span>}
                       </div>
                     </div>
-                    {c.url && (
+                    {c.url ? (
                       <a
                         href={c.url}
                         target="_blank"
                         rel="noopener noreferrer"
                         className={s.openLink}
-                        aria-label="Open resource"
+                        aria-label={`Open ${c.title} in a new tab`}
                       >
-                        <ExternalLink size={14} />
+                        Open <ExternalLink size={13} />
                       </a>
+                    ) : (
+                      <span className={s.noLinkLabel}>No link</span>
                     )}
                   </div>
                 ))}
@@ -288,11 +288,25 @@ export default function SkillRoadmap() {
 
             <div className={s.modalActions}>
               <Button
+                variant="secondary"
+                onClick={() => setOpenMilestone(null)}
+              >
+                Close
+              </Button>
+              <Button
                 onClick={() => handleToggle(openMilestone)}
                 disabled={togglingId === openMilestone._id}
-                variant={openMilestone.done ? "secondary" : "accent"}
+                variant={openMilestone.done ? "ghost" : "accent"}
               >
-                {openMilestone.done ? "Mark incomplete" : "Mark complete"}
+                {openMilestone.done ? (
+                  <>
+                    <X size={14} /> Mark incomplete
+                  </>
+                ) : (
+                  <>
+                    <Check size={14} /> Mark complete
+                  </>
+                )}
               </Button>
             </div>
           </div>

@@ -18,6 +18,8 @@ import {
   ShieldCheck,
   Menu,
   X,
+  Briefcase,
+  Settings,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext.jsx";
 import s from "./AppShell.module.css";
@@ -38,12 +40,16 @@ const MENTOR_NAV = [
   { to: "/mentor/hub", icon: MessageSquare, label: "Communication Hub" },
 ];
 
+// EXPANDED — added Careers, Events, Settings
 const ADMIN_NAV = [
   { to: "/admin/dashboard", icon: LayoutGrid, label: "Dashboard" },
   { to: "/admin/users", icon: UsersRound, label: "Users" },
+  { to: "/admin/careers", icon: Briefcase, label: "Careers" },
+  { to: "/admin/events", icon: Calendar, label: "Events" },
   { to: "/admin/market-data", icon: TrendingUp, label: "Market Data" },
   { to: "/admin/roadmaps", icon: Map, label: "Roadmaps" },
   { to: "/admin/moderation", icon: ShieldCheck, label: "Moderation" },
+  { to: "/admin/settings", icon: Settings, label: "Settings" },
 ];
 
 export default function AppShell() {
@@ -75,7 +81,6 @@ export default function AppShell() {
 
   return (
     <div className={s.shell}>
-      {/* Mobile menu trigger */}
       <button
         className={s.mobileMenuBtn}
         onClick={() => setSidebarOpen(true)}
@@ -84,12 +89,10 @@ export default function AppShell() {
         <Menu size={22} />
       </button>
 
-      {/* Sidebar overlay (mobile) */}
       {sidebarOpen && (
         <div className={s.scrim} onClick={() => setSidebarOpen(false)} />
       )}
 
-      {/* Sidebar */}
       <aside className={`${s.sidebar} ${sidebarOpen ? s.sidebarOpen : ""}`}>
         <div className={s.brand}>
           <div className={s.brandLogo}>
@@ -145,7 +148,6 @@ export default function AppShell() {
         </div>
       </aside>
 
-      {/* Main */}
       <main className={s.main}>
         <header className={s.topbar}>
           <div className={s.search}>

@@ -1,14 +1,15 @@
 /* src/components/layout/AppShell.module.css */
 
 .shell {
-  display: grid;
-  grid-template-columns: 260px 1fr;
-  min-height: 100vh;
-  background: var(--color-bg);
+  display: flex;
+  height: 100vh; /* Locks the app to exactly the window height */
+  width: 100vw;
+  overflow: hidden; /* Kills the global browser scroll */
+  background: var(--color-bg); /* Uses your global background color */
 }
 
 /* =========================================================================
-   SIDEBAR
+   SIDEBAR — fixed-height with scrollable nav
    ========================================================================= */
 
 .sidebar {
@@ -51,14 +52,15 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 22px 22px 18px;
+  padding: 18px 20px 14px;
   position: relative;
   z-index: 1;
+  flex-shrink: 0;
 }
 
 .brandLogo {
-  width: 40px;
-  height: 40px;
+  width: 38px;
+  height: 38px;
   border-radius: var(--radius-sm);
   background: linear-gradient(
     135deg,
@@ -80,7 +82,7 @@
 }
 
 .brandName {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 800;
   color: white;
   letter-spacing: -0.02em;
@@ -88,7 +90,7 @@
 }
 
 .brandTag {
-  font-size: 11px;
+  font-size: 10px;
   color: rgba(255, 255, 255, 0.7);
   font-weight: 500;
   letter-spacing: 0.05em;
@@ -114,21 +116,24 @@
   text-transform: uppercase;
   letter-spacing: 0.14em;
   color: rgba(255, 255, 255, 0.55);
-  padding: 0 22px;
-  margin-bottom: 8px;
+  padding: 0 20px 6px;
   position: relative;
   z-index: 1;
+  flex-shrink: 0;
 }
 
+/* CRITICAL: nav scrolls if content exceeds available space */
 .nav {
   flex: 1;
   display: flex;
   flex-direction: column;
   gap: 2px;
-  padding: 0 12px;
+  padding: 0 12px 12px;
   overflow-y: auto;
+  overflow-x: hidden;
   position: relative;
   z-index: 1;
+  min-height: 0; /* allows flex child to actually scroll */
 }
 
 .nav::-webkit-scrollbar {
@@ -137,13 +142,14 @@
 .nav::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.2);
   border: none;
+  border-radius: 4px;
 }
 
 .navItem {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 11px 14px;
+  padding: 10px 14px;
   border-radius: var(--radius);
   color: rgba(255, 255, 255, 0.78);
   font-size: 14px;
@@ -151,20 +157,18 @@
   text-decoration: none;
   transition: all 0.18s var(--ease-out);
   position: relative;
+  flex-shrink: 0;
 }
 
 .navItem:hover {
   background: rgba(255, 255, 255, 0.1);
   color: white;
-  transform: translateX(2px);
 }
 
 .navItemActive {
   background: rgba(255, 255, 255, 0.18);
   color: white;
   font-weight: 600;
-  backdrop-filter: blur(8px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
 
 .navItemActive::before {
@@ -180,26 +184,28 @@
   box-shadow: 0 0 12px var(--color-accent);
 }
 
+/* CRITICAL: footer locked at bottom, never overflows */
 .sidebarFoot {
-  padding: 14px;
+  padding: 12px;
   border-top: 1px solid rgba(255, 255, 255, 0.12);
   position: relative;
   z-index: 1;
+  flex-shrink: 0;
 }
 
 .userMini {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px;
+  padding: 8px 10px;
   background: rgba(255, 255, 255, 0.1);
   border-radius: var(--radius);
   backdrop-filter: blur(8px);
 }
 
 .userAvatar {
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   background: linear-gradient(
     135deg,
@@ -210,7 +216,7 @@
   display: grid;
   place-items: center;
   font-weight: 700;
-  font-size: 13px;
+  font-size: 12px;
   flex-shrink: 0;
 }
 
@@ -239,6 +245,7 @@
   transition: all 0.15s ease;
   display: grid;
   place-items: center;
+  flex-shrink: 0;
 }
 
 .logoutBtn:hover {
@@ -251,12 +258,12 @@
    ========================================================================= */
 
 .main {
-  display: flex;
-  flex-direction: column;
-  min-width: 0; /* prevent grid blowout */
+  flex: 1; /* Takes up all remaining space to the right of the sidebar */
+  height: 100vh;
+  overflow-y: auto; /* ONLY this specific container is allowed to scroll! */
+  position: relative;
 }
 
-/* TOPBAR */
 .topbar {
   display: flex;
   align-items: center;

@@ -1,65 +1,92 @@
 // backend/src/prompts/roadmap.js
+//
+// Generates a 12-month skill roadmap.
+// CRITICAL change: every course must have a working URL. We use a
+// "smart search URL" strategy — the AI generates URLs that point to real
+// platform searches, which guarantees the link always lands on relevant
+// content even when the AI doesn't know the exact course slug.
 
-export const ROADMAP_PROMPT_VERSION = 'road-v1.0';
+export const PROMPT_VERSION = 'road-v1.1';
 
-export function buildRoadmapPrompt({ user, scores, career, skillGaps }) {
-  const gapList = skillGaps
-    .map((g) => `- ${g.skill}: current ${g.userLevel}/100, required ${g.requiredLevel}/100 (gap: ${g.gap})`)
-    .join('\n');
+export function buildRoadmapPrompt({ studentName, careerTitle, hollandCode, skillStrength = [] }) {
+  const skillStr = skillStrength.length
+    ? skillStrength.map((s) => `${s.skill}: ${s.value}/100`).join(', ')
+    : 'no skill data available';
 
-  return `You are a Pakistani career coach building a 12-month skill roadmap for ONE student targeting ONE specific career.
+  return `You are a career coach helping a Pakistani student build a 12-month learning roadmap.
 
-# STUDENT
-- ${user.name}, ${user.educationLevel || 'unspecified'}${user.fieldOfStudy ? ` (${user.fieldOfStudy})` : ''}
-- University: ${user.university || 'unspecified'}
+STUDENT CONTEXT:
+- Name: ${studentName}
+- Target career: ${careerTitle}
+- Holland Code: ${hollandCode || 'N/A'}
+- Current self-rated skills: ${skillStr}
 
-# TARGET CAREER
-- ${career.title} (${career.cluster})
-- ${career.summary}
-- Core required skills: ${career.coreSkills.join(', ')}
+Generate a personalized 12-month roadmap with 8 milestones spread across 4 phases.
 
-# IDENTIFIED SKILL GAPS (in priority order)
-${gapList || 'No major gaps — focus on depth and portfolio.'}
+═══════════════════════════════════════════════════════════════════
+URL GENERATION RULES — READ CAREFULLY
+═══════════════════════════════════════════════════════════════════
+Every course MUST have a working "url" field. Use these patterns:
 
-# YOUR TASK
-Build a 12-month roadmap with 6-8 milestones spread across 4 phases:
-- "0-3-months" (foundations)
-- "3-6-months" (building)
-- "6-12-months" (specialization)
-- "12+ months" (career-launch / advanced)
+For YouTube content:
+  url: "https://www.youtube.com/results?search_query=<topic+keywords>"
+  Example: "https://www.youtube.com/results?search_query=solidworks+tutorial+beginners"
 
-For each milestone, suggest 1-2 concrete courses. PRIORITIZE FREE OR LOW-COST options accessible from Pakistan:
-- DigiSkills.pk (Pakistani gov free platform)
-- YouTube channels (freeCodeCamp, Programming with Mosh, etc.)
-- Coursera (audit free)
-- edX
-- Specific Pakistani bootcamps if relevant (e.g., Saylani Mass IT, Punjab IT initiative)
+For Coursera:
+  url: "https://www.coursera.org/search?query=<topic+keywords>"
+  Example: "https://www.coursera.org/search?query=machine+learning+pakistan"
 
-# OUTPUT FORMAT (strict JSON)
+For freeCodeCamp:
+  url: "https://www.freecodecamp.org/news/search/?query=<topic>"
+  Example: "https://www.freecodecamp.org/news/search/?query=react"
+
+For edX:
+  url: "https://www.edx.org/search?q=<topic+keywords>"
+  Example: "https://www.edx.org/search?q=cnc+machining"
+
+For DigiSkills.pk (Pakistan free training):
+  url: "https://digiskills.pk/"
+  (Always exact homepage — they list courses on landing page)
+
+For Udemy:
+  url: "https://www.udemy.com/courses/search/?q=<topic+keywords>"
+
+For MIT OpenCourseWare:
+  url: "https://ocw.mit.edu/search/?q=<topic+keywords>"
+
+DO NOT invent specific course URLs like /course/abc-123 — those will 404.
+ALWAYS use the search URL pattern above. URL-encode spaces as +.
+
+═══════════════════════════════════════════════════════════════════
+JSON SHAPE (return ONLY this, no markdown, no preamble)
+═══════════════════════════════════════════════════════════════════
 {
-  "summary": "2-3 sentence overview of the roadmap strategy for this student",
+  "summary": "1-2 sentence motivational summary of the roadmap journey",
   "milestones": [
     {
-      "name": "Milestone name",
-      "description": "1-2 sentence what they'll achieve",
-      "phase": "0-3-months",
+      "name": "Specific milestone name",
+      "description": "1-2 sentences on what they'll learn and why",
+      "phase": "0-3-months" | "3-6-months" | "6-12-months" | "12+ months",
       "courses": [
         {
-          "title": "Course name",
-          "provider": "Provider name",
-          "url": "https://... (real URL or omit if uncertain)",
-          "hours": 30,
-          "isFree": true
+          "title": "Specific resource title (e.g. 'SolidWorks Tutorial for Beginners')",
+          "provider": "YouTube" | "Coursera" | "freeCodeCamp" | "edX" | "DigiSkills.pk" | "Udemy" | "MIT OpenCourseWare",
+          "hours": <integer estimated hours>,
+          "isFree": <boolean>,
+          "url": "<search URL using rules above>"
         }
       ]
     }
   ]
 }
 
-Rules:
-- Output MUST be valid JSON parseable by JSON.parse.
-- 6-8 milestones total. Don't go below 6 or above 8.
-- Phases must use exactly these strings: "0-3-months", "3-6-months", "6-12-months", "12+ months".
-- Suggest real courses where possible. If unsure of URL, omit the url field rather than fabricate.
-- Skill names should match: technical, analytical, creative, communication, leadership, organization.`;
+REQUIREMENTS:
+- Exactly 8 milestones total
+- 2 milestones per phase (Foundations 0-3mo, Building 3-6mo, Specialization 6-12mo, Career launch 12+ mo)
+- Each milestone has 2-3 courses
+- Prefer FREE resources (Pakistan-friendly: YouTube, freeCodeCamp, DigiSkills, MIT OCW)
+- Course titles should be specific and searchable (not "Learn Python" but "Python for Data Analysis: NumPy, Pandas, Matplotlib")
+- Mention the student by name in the summary (use "${studentName}")
+
+Return ONLY the JSON object. No markdown fences, no explanation.`;
 }

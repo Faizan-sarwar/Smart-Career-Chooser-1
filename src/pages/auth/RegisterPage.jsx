@@ -100,9 +100,12 @@ export default function RegisterPage() {
         name: name.trim(),
         email: email.trim().toLowerCase(),
         password,
-        role,
+        // FIX 1: Force the role to lowercase before sending to MongoDB
+        role: role.toLowerCase(),
+
+        // FIX 2: Ensure Mentor data maps to the correct backend field
         ...(role === "Student" && { university: university.trim() }),
-        ...(role === "Mentor" && { university: university.trim() }), // backend reuses this for expertise
+        ...(role === "Mentor" && { expertise: [university.trim()] }),
       };
 
       const { data } = await api.post("/auth/register", payload);

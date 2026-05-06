@@ -26,6 +26,7 @@ const userSchema = new mongoose.Schema(
       minlength: [6, 'Password must be at least 6 characters'],
       select: false,
     },
+    // 🚨 THIS WAS THE CULPRIT! Forced everything to strict lowercase 🚨
     role: {
       type: String,
       enum: ['student', 'mentor', 'admin', 'president'],
@@ -36,7 +37,6 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: '👋',
     },
-    // Student-specific
     university: { type: String },
     educationLevel: {
       type: String,
@@ -44,20 +44,14 @@ const userSchema = new mongoose.Schema(
     },
     fieldOfStudy: { type: String },
     careerInterests: { type: [String], default: [] },
-
-    // Mentor-specific
     expertise: { type: [String], default: [] },
     yearsOfExperience: { type: Number },
     bio: { type: String, maxlength: 1000 },
-
-    // Cached pointer to latest assessment result so dashboard loads fast
     latestAssessmentResult: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'AssessmentResult',
       default: null,
     },
-
-    // Selected primary career (set after viewing recommendations)
     selectedCareer: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Career',
@@ -67,8 +61,8 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// FIX: original code was missing `return` after early next(),
-// which caused the hook to fall through and re-hash on every save.
+// Hash password before saving
+// CORRECT: Modern async/await without next()
 userSchema.pre('save', async function () {
   if (!this.isModified('password')) return;
 
@@ -76,6 +70,7 @@ userSchema.pre('save', async function () {
   this.password = await bcrypt.hash(this.password, salt);
 });
 
+// Match user entered password to hashed password in database
 userSchema.methods.matchPassword = async function (enteredPassword) {
   return bcrypt.compare(enteredPassword, this.password);
 };

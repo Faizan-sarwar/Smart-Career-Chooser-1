@@ -1,7 +1,7 @@
 // src/pages/student/CommunityHub.jsx
 //
-// Fully dynamic: pulls events from /community/events and discussion posts
-// from /community/posts. Shows skeleton while loading, empty state if no data.
+// Pulls events + discussion posts from backend.
+// Each event has a real image + a "Join" link to a Pakistani tech community.
 
 import React, { useEffect, useState } from "react";
 import {
@@ -10,6 +10,7 @@ import {
   MessageSquare,
   AlertCircle,
   RefreshCw,
+  ExternalLink,
 } from "lucide-react";
 import { Page, PageHead } from "../../components/common/Page.jsx";
 import Button from "../../components/common/Button.jsx";
@@ -37,7 +38,7 @@ export default function CommunityHub() {
     } catch (err) {
       setError(
         err.response?.data?.message ||
-          "Could not load community data. Has the backend been seeded?"
+        "Could not load community data. Has the backend been seeded?"
       );
     } finally {
       setLoading(false);
@@ -54,7 +55,9 @@ export default function CommunityHub() {
       const { data } = await api.post(`/community/events/${id}/rsvp`);
       setEvents((evs) =>
         evs.map((e) =>
-          e.id === id ? { ...e, rsvpd: data.rsvpd, attendees: data.attendees } : e
+          e.id === id
+            ? { ...e, rsvpd: data.rsvpd, attendees: data.attendees }
+            : e
         )
       );
     } catch (err) {
@@ -110,7 +113,9 @@ export default function CommunityHub() {
             </span>
             Upcoming live webinars
           </h2>
-          {events.length > 0 && <Badge tone="accent">{events.length} this month</Badge>}
+          {events.length > 0 && (
+            <Badge tone="accent">{events.length} this month</Badge>
+          )}
         </div>
 
         {events.length === 0 ? (
@@ -120,46 +125,13 @@ export default function CommunityHub() {
         ) : (
           <div className={s.eventGrid}>
             {events.map((e, i) => (
-              <article
+              <EventCard
                 key={e.id}
-                className={s.event}
-                style={{ animationDelay: `${i * 0.07}s` }}
-              >
-                <div
-                  className={s.eventCover}
-                  style={{
-                    background: e.coverColor
-                      ? `linear-gradient(135deg, ${e.coverColor} 0%, var(--color-accent) 100%)`
-                      : undefined,
-                  }}
-                >
-                  <span className={s.eventTag}>{e.tag}</span>
-                  <div className={s.live}>
-                    <span className={s.liveDot} />
-                    LIVE soon
-                  </div>
-                </div>
-                <div className={s.eventBody}>
-                  <h4 className={s.eventTitle}>{e.title}</h4>
-                  <div className={s.eventMeta}>
-                    <span>{e.host}</span>
-                  </div>
-                  <div className={s.eventWhen}>{e.when}</div>
-                  <div className={s.eventFoot}>
-                    <span className={s.attendees}>
-                      <Users size={14} /> {e.attendees}
-                    </span>
-                    <Button
-                      size="sm"
-                      variant={e.rsvpd ? "secondary" : "primary"}
-                      disabled={rsvpingId === e.id}
-                      onClick={() => handleRsvp(e.id)}
-                    >
-                      {e.rsvpd ? "RSVP'd ✓" : "RSVP"}
-                    </Button>
-                  </div>
-                </div>
-              </article>
+                event={e}
+                index={i}
+                rsvping={rsvpingId === e.id}
+                onRsvp={() => handleRsvp(e.id)}
+              />
             ))}
           </div>
         )}
@@ -212,5 +184,75 @@ export default function CommunityHub() {
         )}
       </section>
     </Page>
+  );
+}
+
+// ── Single event card with image fallback ───────────────────────────
+function EventCard({ event, index, rsvping, onRsvp }) {
+  const [imgFailed, setImgFailed] = useState(false);
+
+  return (
+    <article
+      className={s.event}
+      style={{ animationDelay: `${index * 0.07}s` }}
+    >
+      <div className={s.eventCover}>
+        {event.imageUrl && !imgFailed ? (
+          <img
+            src={event.imageUrl}
+            alt=""
+            className={s.eventImg}
+            onError={() => setImgFailed(true)}
+          />
+        ) : (
+          <div className={s.eventCoverFallback} />
+        )}
+        <div className={s.coverOverlay} />
+        <span className={s.eventTag}>{event.tag}</span>
+        <div className={s.live}>
+          <span className={s.liveDot} />
+          LIVE soon
+        </div>
+      </div>
+
+      <div className={s.eventBody}>
+        <h4 className={s.eventTitle}>{event.title}</h4>
+        <div className={s.eventMeta}>
+          <span>{event.host}</span>
+        </div>
+        <div className={s.eventWhen}>{event.when}</div>
+
+        {event.description && (
+          <p className={s.eventDesc}>{event.description}</p>
+        )}
+
+        <div className={s.eventFoot}>
+          <span className={s.attendees}>
+            <Users size={14} /> {event.attendees}
+          </span>
+          <div className={s.eventActions}>
+            {event.link && (
+              <a
+                href={event.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={s.joinLink}
+                aria-label={`Open ${event.host} in a new tab`}
+              >
+                <ExternalLink size={13} /> Visit
+              </a>
+            )}
+            <Button
+              size="sm"
+              variant={event.rsvpd ? "secondary" : "primary"}
+              disabled={rsvping}
+              onClick={onRsvp}
+            >
+              {event.rsvpd ? "RSVP'd ✓" : "RSVP"}
+            </Button>
+          </div>
+        </div>
+      </div>
+    </article>
   );
 }

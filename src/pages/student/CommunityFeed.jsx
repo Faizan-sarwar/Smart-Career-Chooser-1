@@ -4,14 +4,7 @@
 // like/unlike posts. All persists to MongoDB.
 
 import React, { useState, useEffect } from "react";
-import {
-  Heart,
-  MessageCircle,
-  Share2,
-  AlertCircle,
-  RefreshCw,
-  Sparkles,
-} from "lucide-react";
+import { Heart, MessageCircle, Share2, AlertCircle, RefreshCw, Sparkles, Send } from "lucide-react";
 import { Page, PageHead } from "../../components/common/Page.jsx";
 import Card from "../../components/common/Card.jsx";
 import Badge from "../../components/common/Badge.jsx";
@@ -32,6 +25,11 @@ export default function CommunityFeed() {
   const [posting, setPosting] = useState(false);
   const [error, setError] = useState("");
   const [likedPosts, setLikedPosts] = useState({});
+
+  // NEW STATES FOR INTERACTIVITY
+  const [activeCommentPostId, setActiveCommentPostId] = useState(null);
+  const [commentDraft, setCommentDraft] = useState("");
+  const [shareToast, setShareToast] = useState(false);
 
   const fetchPosts = async () => {
     setLoading(true);
@@ -93,6 +91,26 @@ export default function CommunityFeed() {
             : p
         )
       );
+    }
+  };
+  const handleShare = (postId) => {
+    // Copies a fake link to the clipboard
+    navigator.clipboard.writeText(`${window.location.origin}/post/${postId}`);
+    setShareToast(true);
+    setTimeout(() => setShareToast(false), 2000);
+  };
+
+  const submitComment = async (postId) => {
+    if (!commentDraft.trim()) return;
+    try {
+      const { data } = await api.post(`/community/posts/${postId}/comment`, { text: commentDraft });
+      // Update the post with the new comments array from the backend
+      setPosts(prev => prev.map(p =>
+        p.id === postId ? { ...p, comments: data, commentsCount: data.length } : p
+      ));
+      setCommentDraft("");
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -211,22 +229,52 @@ export default function CommunityFeed() {
                   <p className={s.body}>{p.body}</p>
                   <div className={s.actions}>
                     <button
-                      className={`${s.action} ${likedPosts[p.id] ? s.actionLiked : ""}`}
+                      // Use real DB hasLiked state!
+                      className={`${s.action} ${p.hasLiked || likedPosts[p.id] ? s.actionLiked : ""}`}
                       onClick={() => toggleLike(p.id)}
                     >
                       <Heart
                         size={15}
-                        fill={likedPosts[p.id] ? "currentColor" : "none"}
+                        fill={p.hasLiked || likedPosts[p.id] ? "currentColor" : "none"}
                       />{" "}
                       {p.likes}
                     </button>
-                    <span className={s.action}>
-                      <MessageCircle size={15} /> {p.comments}
-                    </span>
-                    <span className={s.action}>
-                      <Share2 size={15} /> Share
-                    </span>
+                    <button
+                      className={s.action}
+                      onClick={() => setActiveCommentPostId(activeCommentPostId === p.id ? null : p.id)}
+                    >
+                      <MessageCircle size={15} /> {p.commentsCount}
+                    </button>
+                    <button className={s.action} onClick={() => handleShare(p.id)}>
+                      <Share2 size={15} /> {shareToast ? "Copied!" : "Share"}
+                    </button>
                   </div>
+
+                  {/* COMMENTS EXPANDABLE SECTION */}
+                  {activeCommentPostId === p.id && (
+                    <div className={s.commentsSection}>
+                      <div className={s.commentList}>
+                        {p.comments?.map(c => (
+                          <div key={c.id} className={s.commentItem}>
+                            <strong>{c.author}</strong> <span className={s.commentTime}>{c.time}</span>
+                            <p>{c.text}</p>
+                          </div>
+                        ))}
+                      </div>
+                      <div className={s.commentInputRow}>
+                        <input
+                          type="text"
+                          placeholder="Write a comment..."
+                          value={commentDraft}
+                          onChange={(e) => setCommentDraft(e.target.value)}
+                          onKeyDown={(e) => e.key === 'Enter' && submitComment(p.id)}
+                        />
+                        <button onClick={() => submitComment(p.id)} disabled={!commentDraft.trim()}>
+                          <Send size={16} />
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </article>
               ))}
             </div>

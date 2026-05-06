@@ -1,4 +1,3 @@
-// backend/server.js
 import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
@@ -19,14 +18,30 @@ dotenv.config();
 
 const app = express();
 
+// 1. MUST BE FIRST: Enable CORS for your frontend
+app.use(cors());
+
+// 2. MUST BE SECOND: Parse incoming JSON payloads (only once!)
+app.use(express.json({ limit: '1mb' }));
+
+// 3. OPTIONAL BUT RECOMMENDED: Parse URL-encoded bodies (fixes issues if testing via Postman x-www-form-urlencoded)
+app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+
+// 4. Database Connection
 mongoose
   .connect(process.env.MONGO_URI || 'mongodb://localhost:27017/career-chooser')
   .then(() => console.log('MongoDB Connected'))
   .catch((err) => console.log('MongoDB Connection Failed:', err));
 
-app.use(cors());
-app.use(express.json({ limit: '1mb' }));
-
+app.use((req, res, next) => {
+  if (req.path === '/api/auth/login' && req.method === 'POST') {
+    console.log('--- INCOMING LOGIN REQUEST ---');
+    console.log('Content-Type Header:', req.headers['content-type']);
+    console.log('Raw Body:', req.body);
+    console.log('------------------------------');
+  }
+  next();
+})
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/assessment', assessmentRoutes);

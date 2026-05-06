@@ -49,11 +49,16 @@ export const registerUser = async (req, res, next) => {
 };
 
 // @desc    Authenticate user & get token (Login)
-// @route   POST /api/auth/login
-// @access  Public
+
 export const authUser = async (req, res, next) => {
   try {
     const { email, password } = req.body;
+
+    // 🛑 ADD THIS: Validate that both email and password were provided
+    if (!email || !password) {
+      res.status(400);
+      throw new Error('Please provide both email and password');
+    }
 
     // 1. Find user by email and explicitly select the password field
     const user = await User.findOne({ email }).select('+password');

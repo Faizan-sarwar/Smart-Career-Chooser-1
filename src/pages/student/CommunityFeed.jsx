@@ -1,94 +1,254 @@
+// src/pages/student/CommunityFeed.jsx
+//
+// Real-time community feed: GET /community/posts, POST new ones,
+// like/unlike posts. All persists to MongoDB.
+
 import React, { useState, useEffect } from "react";
-import { Heart, MessageCircle, Share2 } from "lucide-react";
+import {
+  Heart,
+  MessageCircle,
+  Share2,
+  AlertCircle,
+  RefreshCw,
+  Sparkles,
+} from "lucide-react";
 import { Page, PageHead } from "../../components/common/Page.jsx";
 import Card from "../../components/common/Card.jsx";
 import Badge from "../../components/common/Badge.jsx";
 import Button from "../../components/common/Button.jsx";
 import { Textarea } from "../../components/common/Field.jsx";
-import CircularProgress from "../../components/common/CircularProgress.jsx";
 import api from "../../lib/axios.js";
 import { useAuth } from "../../context/AuthContext.jsx";
 import s from "./CommunityFeed.module.css";
+
+const TAGS = ["Discussion", "Question", "Insight", "Resource", "News", "Career"];
 
 export default function CommunityFeed() {
   const { user } = useAuth();
   const [posts, setPosts] = useState([]);
   const [draft, setDraft] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
-  const [isPosting, setIsPosting] = useState(false);
+  const [draftTag, setDraftTag] = useState("Discussion");
+  const [loading, setLoading] = useState(true);
+  const [posting, setPosting] = useState(false);
+  const [error, setError] = useState("");
+  const [likedPosts, setLikedPosts] = useState({});
+
+  const fetchPosts = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const { data } = await api.get("/community/posts");
+      setPosts(data);
+    } catch (err) {
+      setError(
+        err.response?.data?.message ||
+        "Could not load community feed. Has the backend been seeded?"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchPosts = async () => {
-      try {
-        const { data } = await api.get('/community/feed');
-        setPosts(data);
-      } catch (err) {
-        console.error("Failed to load community feed", err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
     fetchPosts();
   }, []);
 
   const submit = async () => {
     if (!draft.trim()) return;
-    setIsPosting(true);
+    setPosting(true);
     try {
-      const { data } = await api.post('/community/feed', { body: draft });
-      setPosts([data, ...posts]); // Add new post to top of UI
+      const { data } = await api.post("/community/posts", {
+        body: draft.trim(),
+        tag: draftTag,
+      });
+      setPosts((prev) => [data, ...prev]);
       setDraft("");
+      setDraftTag("Discussion");
     } catch (err) {
       console.error("Failed to post", err);
     } finally {
-      setIsPosting(false);
+      setPosting(false);
     }
   };
 
-  if (isLoading) return <Page><div style={{display:'grid', placeItems:'center', height:'50vh'}}><CircularProgress value={0} size={50} stroke={4}/></div></Page>;
+  const toggleLike = async (id) => {
+    // Optimistic
+    setLikedPosts((m) => ({ ...m, [id]: !m[id] }));
+    setPosts((prev) =>
+      prev.map((p) =>
+        p.id === id
+          ? { ...p, likes: p.likes + (likedPosts[id] ? -1 : 1) }
+          : p
+      )
+    );
+    try {
+      await api.post(`/community/posts/${id}/like`);
+    } catch (err) {
+      // Revert on failure
+      setLikedPosts((m) => ({ ...m, [id]: !m[id] }));
+      setPosts((prev) =>
+        prev.map((p) =>
+          p.id === id
+            ? { ...p, likes: p.likes + (likedPosts[id] ? 1 : -1) }
+            : p
+        )
+      );
+    }
+  };
+
+  if (loading) {
+    return (
+      <Page>
+        <PageHead title="Community" />
+        <div className={s.loadingState}>
+          <div className={s.loaderRing} />
+          <p>Loading the feed…</p>
+        </div>
+      </Page>
+    );
+  }
+
+  if (error) {
+    return (
+      <Page>
+        <PageHead title="Community" />
+        <div className={s.errorState}>
+          <AlertCircle size={28} />
+          <h3>Couldn't load community</h3>
+          <p>{error}</p>
+          <Button onClick={fetchPosts}>
+            <RefreshCw size={14} /> Retry
+          </Button>
+        </div>
+      </Page>
+    );
+  }
 
   return (
     <Page>
-      <PageHead title="Community" subtitle="Career news, peer questions, and mentor wisdom." />
+      <PageHead
+        title="Community"
+        subtitle="Career news, peer questions, and mentor wisdom — straight from Pakistan's tech community."
+      />
+
       <div className={s.layout}>
         <div>
+          {/* Composer */}
           <div className={s.composer}>
-            <Textarea placeholder="Share an update, question, or insight…" value={draft} onChange={(e) => setDraft(e.target.value)} disabled={isPosting} />
-            <div style={{ display: "flex", justifyContent: "flex-end" }}>
-              <Button onClick={submit} disabled={!draft.trim() || isPosting}>
-                {isPosting ? "Posting..." : "Post"}
+            <div className={s.composerHead}>
+              <div className={s.composerAvatar}>
+                {(user?.name || "U")
+                  .split(" ")
+                  .map((p) => p[0])
+                  .slice(0, 2)
+                  .join("")}
+              </div>
+              <Textarea
+                placeholder="Share an update, question, or insight…"
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                disabled={posting}
+                rows={3}
+              />
+            </div>
+
+            <div className={s.composerFoot}>
+              <div className={s.tagPicker}>
+                {TAGS.map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    className={`${s.tagBtn} ${draftTag === t ? s.tagBtnActive : ""}`}
+                    onClick={() => setDraftTag(t)}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
+              <Button
+                variant="accent"
+                onClick={submit}
+                disabled={!draft.trim() || posting}
+              >
+                <Sparkles size={14} /> {posting ? "Posting…" : "Post"}
               </Button>
             </div>
           </div>
 
-          <div className={s.feed}>
-            {posts.map((p) => (
-              <article key={p.id} className={s.post}>
-                <div className={s.head}>
-                  <div className={s.avatar}>{p.author.split(" ").map((x) => x[0]).slice(0,2).join("")}</div>
-                  <div style={{ flex: 1 }}>
-                    <div className={s.author}>{p.author} <Badge tone={p.role.toLowerCase() === "mentor" ? "info" : "neutral"}>{p.role}</Badge></div>
-                    <div className={s.meta}>{p.time}</div>
+          {/* Feed */}
+          {posts.length === 0 ? (
+            <div className={s.emptyFeed}>
+              <p>No posts yet. Be the first to share something!</p>
+            </div>
+          ) : (
+            <div className={s.feed}>
+              {posts.map((p, i) => (
+                <article
+                  key={p.id}
+                  className={s.post}
+                  style={{ animationDelay: `${i * 0.05}s` }}
+                >
+                  <div className={s.head}>
+                    <div className={s.avatar}>
+                      {p.author
+                        .split(" ")
+                        .map((x) => x[0])
+                        .slice(0, 2)
+                        .join("")}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div className={s.author}>
+                        {p.author}{" "}
+                        <Badge tone={p.role === "Mentor" ? "primary" : "default"}>
+                          {p.role}
+                        </Badge>
+                      </div>
+                      <div className={s.meta}>{p.time}</div>
+                    </div>
+                    <Badge tone="accent">{p.tag}</Badge>
                   </div>
-                  <Badge>{p.tag}</Badge>
-                </div>
-                <div className={s.title}>{p.title}</div>
-                <p className={s.body}>{p.body}</p>
-                <div className={s.actions}>
-                  <span className={s.action}><Heart size={15} /> {p.likes}</span>
-                  <span className={s.action}><MessageCircle size={15} /> {p.comments}</span>
-                  <span className={s.action}><Share2 size={15} /> Share</span>
-                </div>
-              </article>
-            ))}
-          </div>
+                  {p.title && <div className={s.title}>{p.title}</div>}
+                  <p className={s.body}>{p.body}</p>
+                  <div className={s.actions}>
+                    <button
+                      className={`${s.action} ${likedPosts[p.id] ? s.actionLiked : ""}`}
+                      onClick={() => toggleLike(p.id)}
+                    >
+                      <Heart
+                        size={15}
+                        fill={likedPosts[p.id] ? "currentColor" : "none"}
+                      />{" "}
+                      {p.likes}
+                    </button>
+                    <span className={s.action}>
+                      <MessageCircle size={15} /> {p.comments}
+                    </span>
+                    <span className={s.action}>
+                      <Share2 size={15} /> Share
+                    </span>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
         </div>
 
         <aside className={s.side}>
           <Card title="Community guidelines">
-            <p style={{ fontSize: 13, color: "var(--color-muted)" }}>
-              Be respectful, share sources for advice, and keep discussions focused on learning and careers.
+            <p style={{ fontSize: 13, color: "var(--color-muted)", lineHeight: 1.6 }}>
+              Be respectful, share sources for advice, and keep discussions focused
+              on learning and careers. No spam, no self-promotion.
             </p>
+          </Card>
+
+          <Card title="Trending tags">
+            <div className={s.tagCloud}>
+              {TAGS.map((t) => (
+                <span key={t} className={s.cloudTag}>
+                  #{t}
+                </span>
+              ))}
+            </div>
           </Card>
         </aside>
       </div>

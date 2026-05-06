@@ -1,40 +1,166 @@
+/* src/pages/student/MarketInsights.module.css */
+
+.loadingState,
+.errorState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 40vh;
+  gap: 16px;
+  color: var(--color-muted);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 56px 32px;
+  text-align: center;
+}
+
+.errorState svg {
+  color: var(--color-danger);
+}
+
+.errorState h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.loaderRing {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 4px solid var(--color-primary-soft);
+  border-top-color: var(--color-primary);
+  animation: ccSpin 0.9s linear infinite;
+}
+
+/* =========================================================================
+   TICKER
+   ========================================================================= */
+
 .tickerWrap {
-  background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
+  background: linear-gradient(
+    90deg,
+    var(--color-primary) 0%,
+    var(--color-primary-dark) 50%,
+    var(--color-accent) 100%
+  );
   background-size: 200% 200%;
   animation: ccGradientShift 10s ease infinite;
-  border-radius: 12px;
-  padding: 12px 0;
+  border-radius: var(--radius-md);
+  padding: 14px 0;
   overflow: hidden;
-  color: #fff;
-  box-shadow: var(--shadow-md);
+  color: white;
+  box-shadow: var(--shadow-glow);
+  position: relative;
 }
+
+.tickerWrap::before,
+.tickerWrap::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 60px;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.tickerWrap::before {
+  left: 0;
+  background: linear-gradient(90deg, var(--color-primary) 0%, transparent 100%);
+}
+
+.tickerWrap::after {
+  right: 0;
+  background: linear-gradient(270deg, var(--color-accent) 0%, transparent 100%);
+}
+
 .tickerInner {
-  display: flex; gap: 56px;
+  display: flex;
+  gap: 56px;
   white-space: nowrap;
   animation: tickerScroll 35s linear infinite;
 }
-.tickerItem { font-weight: 600; font-size: 14px; }
-@keyframes tickerScroll {
-  from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
+
+.tickerItem {
+  font-weight: 600;
+  font-size: 14px;
 }
 
-.twoCol { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; }
-@media (max-width: 1024px) { .twoCol { grid-template-columns: 1fr; } }
+@keyframes tickerScroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
 
-.trendList { display: flex; flex-direction: column; gap: 12px; }
+/* =========================================================================
+   TWO COLUMN
+   ========================================================================= */
+
+.twoCol {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 1024px) {
+  .twoCol {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =========================================================================
+   TRENDING CAREERS
+   ========================================================================= */
+
+.trendList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
 .trendCard {
-  display: flex; align-items: center; gap: 14px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
   padding: 14px 16px;
-  border-radius: 12px;
+  border-radius: var(--radius);
   background: var(--color-bg);
   border-left: 4px solid;
-  transition: transform .25s ease, box-shadow .25s ease;
+  border-top: 1px solid var(--color-border);
+  border-right: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+  opacity: 0;
+  animation: slideUpFade 0.4s var(--ease-out) forwards;
+  transition: all 0.25s var(--ease-out);
 }
-.trendCard:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+
+.trendCard:hover {
+  transform: translateX(4px);
+  box-shadow: var(--shadow-md);
+}
+
 .trendPulse {
-  width: 12px; height: 12px; border-radius: 50%;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
   animation: ccPulseRing 1.6s ease-out infinite;
+  flex-shrink: 0;
 }
-.trendTitle { font-weight: 700; font-size: 14px; }
-.trendGrowth { font-size: 12px; color: var(--color-muted); margin-top: 2px; }
+
+.trendTitle {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--color-text);
+}
+
+.trendGrowth {
+  font-size: 12px;
+  color: var(--color-muted);
+  margin-top: 2px;
+  font-weight: 500;
+}

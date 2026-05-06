@@ -1,15 +1,30 @@
+// src/components/common/Button.jsx
 import React from "react";
 import s from "./Button.module.css";
 
 export default function Button({
-  variant = "primary",
-  size,
-  block,
-  className = "",
   children,
+  variant = "primary",
+  size = "md",
+  disabled = false,
+  type = "button",
+  onClick,
+  className = "",
   ...rest
 }) {
-  const cls = [s.btn, s[variant], size && s[size], block && s.block, className]
-    .filter(Boolean).join(" ");
-  return <button className={cls} {...rest}>{children}</button>;
+  const cls = [
+    s.btn,
+    s[`btn_${variant}`],
+    s[`size_${size}`],
+    disabled ? s.disabled : "",
+    className,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  return (
+    <button type={type} className={cls} onClick={onClick} disabled={disabled} {...rest}>
+      {children}
+    </button>
+  );
 }

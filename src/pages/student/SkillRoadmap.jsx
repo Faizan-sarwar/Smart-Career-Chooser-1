@@ -1,9 +1,4 @@
 // src/pages/student/SkillRoadmap.jsx
-//
-// Displays the user's active roadmap. Milestones are grouped by phase
-// (0-3, 3-6, 6-12, 12+ months). Users can toggle milestones complete,
-// which persists to the backend.
-
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -15,20 +10,19 @@ import {
   ExternalLink,
   Target,
   Sparkles,
+  TrendingUp,
 } from "lucide-react";
 import { Page, PageHead } from "../../components/common/Page.jsx";
 import Button from "../../components/common/Button.jsx";
-import Card from "../../components/common/Card.jsx";
-import CircularProgress from "../../components/common/CircularProgress.jsx";
 import api from "../../lib/axios.js";
 import s from "./SkillRoadmap.module.css";
 
 const PHASE_ORDER = ["0-3-months", "3-6-months", "6-12-months", "12+ months"];
-const PHASE_LABELS = {
-  "0-3-months": "Foundations · Months 0–3",
-  "3-6-months": "Building · Months 3–6",
-  "6-12-months": "Specialization · Months 6–12",
-  "12+ months": "Career launch · 12+ months",
+const PHASE_META = {
+  "0-3-months": { label: "Foundations", subtitle: "Months 0–3", color: "primary" },
+  "3-6-months": { label: "Building", subtitle: "Months 3–6", color: "primary" },
+  "6-12-months": { label: "Specialization", subtitle: "Months 6–12", color: "accent" },
+  "12+ months": { label: "Career launch", subtitle: "12+ months", color: "accent" },
 };
 
 export default function SkillRoadmap() {
@@ -57,7 +51,6 @@ export default function SkillRoadmap() {
         `/roadmap/${roadmap._id}/milestones/${milestone._id}`,
         { done: !milestone.done }
       );
-      // Optimistic local update
       setRoadmap((rm) => ({
         ...rm,
         milestones: rm.milestones.map((m) =>
@@ -79,8 +72,8 @@ export default function SkillRoadmap() {
   if (loading) {
     return (
       <Page>
-        <div className={s.loadingBox}>
-          <CircularProgress value={0} size={50} stroke={4} />
+        <div className={s.loadingState}>
+          <div className={s.loaderRing} />
           <p>Loading your roadmap…</p>
         </div>
       </Page>
@@ -91,19 +84,19 @@ export default function SkillRoadmap() {
     return (
       <Page>
         <PageHead title="Skill Roadmap" />
-        <Card>
-          <div style={{ textAlign: "center", padding: "32px 16px" }}>
-            <Target size={40} color="#9ca3af" />
-            <h3 style={{ margin: "16px 0 8px" }}>No roadmap yet</h3>
-            <p style={{ color: "#6b7280", marginBottom: 20 }}>
-              Pick a career from your recommendations to generate a personalized
-              12-month skill roadmap.
-            </p>
-            <Button onClick={() => navigate("/student/recommendations")}>
-              See recommendations
-            </Button>
+        <div className={s.emptyState}>
+          <div className={s.emptyIcon}>
+            <Target size={32} />
           </div>
-        </Card>
+          <h2>No roadmap yet</h2>
+          <p>
+            Pick a career from your recommendations to generate a personalized 12-month
+            skill roadmap with free Pakistani learning resources.
+          </p>
+          <Button variant="accent" size="lg" onClick={() => navigate("/student/recommendations")}>
+            <Sparkles size={16} /> See recommendations
+          </Button>
+        </div>
       </Page>
     );
   }
@@ -112,7 +105,6 @@ export default function SkillRoadmap() {
   const completed = roadmap.milestones.filter((m) => m.done).length;
   const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
 
-  // Group by phase
   const byPhase = PHASE_ORDER.map((phase) => ({
     phase,
     items: roadmap.milestones.filter((m) => m.phase === phase),
@@ -121,8 +113,8 @@ export default function SkillRoadmap() {
   return (
     <Page>
       <PageHead
-        title={`Roadmap · ${roadmap.careerTitle}`}
-        subtitle="Bridge the gap between where you are and where you're going."
+        title={`Roadmap: ${roadmap.careerTitle}`}
+        subtitle="Your AI-personalized learning journey from where you are to where you're going."
         actions={
           <Button
             variant="secondary"
@@ -134,60 +126,96 @@ export default function SkillRoadmap() {
       />
 
       {roadmap.summary && (
-        <div className={s.summaryNotice}>
-          <Sparkles size={16} />
+        <div className={s.summaryBanner}>
+          <div className={s.summaryIcon}>
+            <Sparkles size={16} />
+          </div>
           <p>{roadmap.summary}</p>
         </div>
       )}
 
-      <div className={s.summary}>
-        <div>
-          <div className={s.sumLabel}>Roadmap progress</div>
-          <div className={s.sumValue}>
-            {completed} / {total} milestones · {pct}%
+      <div className={s.progressCard}>
+        <div className={s.progressLeft}>
+          <div className={s.progressLabel}>Roadmap progress</div>
+          <div className={s.progressValue}>
+            <span className={s.progressBig}>{completed}</span>
+            <span className={s.progressSep}>/</span>
+            <span className={s.progressTotal}>{total}</span>
+            <span className={s.progressUnit}>milestones</span>
           </div>
         </div>
-        <div className={s.bar}>
-          <div className={s.barFill} style={{ width: `${pct}%` }} />
+        <div className={s.progressRight}>
+          <div className={s.progressPct}>{pct}%</div>
+          <div className={s.progressBar}>
+            <div className={s.progressFill} style={{ width: `${pct}%` }} />
+          </div>
         </div>
       </div>
 
-      {byPhase.map((group) => (
-        <div key={group.phase} className={s.phaseGroup}>
-          <h3 className={s.phaseTitle}>{PHASE_LABELS[group.phase]}</h3>
-          <div className={s.timeline}>
-            {group.items.map((node, i) => (
-              <div
-                key={node._id}
-                className={`${s.node} ${node.done ? s.nodeDone : s.nodeLocked}`}
-                style={{ animationDelay: `${i * 0.06}s` }}
-              >
-                <button
-                  type="button"
-                  className={s.bullet}
-                  onClick={() => handleToggle(node)}
-                  disabled={togglingId === node._id}
-                  aria-label={node.done ? "Mark incomplete" : "Mark complete"}
-                >
-                  {node.done ? <Check size={18} /> : <Lock size={16} />}
-                </button>
-                <div className={s.nodeBody} onClick={() => setOpenMilestone(node)}>
-                  <div className={s.nodeTitle}>{node.name}</div>
-                  <div className={s.nodeMeta}>
-                    {node.done
-                      ? "Completed"
-                      : `${node.courses?.length || 0} suggested course${node.courses?.length === 1 ? "" : "s"
-                      }`}
-                  </div>
-                </div>
-                <Button variant="ghost" size="sm" onClick={() => setOpenMilestone(node)}>
-                  View →
-                </Button>
+      {byPhase.map((group, gIdx) => {
+        const meta = PHASE_META[group.phase];
+        return (
+          <div key={group.phase} className={s.phaseGroup}>
+            <div className={s.phaseHead}>
+              <div className={`${s.phaseBadge} ${s[`phase_${meta.color}`]}`}>
+                Phase {gIdx + 1}
               </div>
-            ))}
+              <div>
+                <h3 className={s.phaseTitle}>{meta.label}</h3>
+                <div className={s.phaseSubtitle}>{meta.subtitle}</div>
+              </div>
+            </div>
+
+            <div className={s.timeline}>
+              {group.items.map((node, i) => (
+                <div
+                  key={node._id}
+                  className={`${s.node} ${node.done ? s.nodeDone : ""}`}
+                  style={{ animationDelay: `${(gIdx * 4 + i) * 0.05}s` }}
+                >
+                  <button
+                    type="button"
+                    className={s.bullet}
+                    onClick={() => handleToggle(node)}
+                    disabled={togglingId === node._id}
+                    aria-label={node.done ? "Mark incomplete" : "Mark complete"}
+                  >
+                    {node.done ? <Check size={18} /> : <Lock size={15} />}
+                  </button>
+
+                  <div
+                    className={s.nodeBody}
+                    onClick={() => setOpenMilestone(node)}
+                    role="button"
+                    tabIndex={0}
+                  >
+                    <div className={s.nodeTitle}>{node.name}</div>
+                    {node.description && (
+                      <div className={s.nodeDesc}>{node.description}</div>
+                    )}
+                    <div className={s.nodeMeta}>
+                      {node.done ? (
+                        <span className={s.nodeMetaDone}>
+                          <Check size={11} /> Completed
+                        </span>
+                      ) : (
+                        <span>
+                          <BookOpen size={11} /> {node.courses?.length || 0} resource
+                          {node.courses?.length === 1 ? "" : "s"}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <Button variant="ghost" size="sm" onClick={() => setOpenMilestone(node)}>
+                    View →
+                  </Button>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
 
       {openMilestone && (
         <div className={s.scrim} onClick={() => setOpenMilestone(null)}>
@@ -199,28 +227,40 @@ export default function SkillRoadmap() {
             >
               <X size={18} />
             </button>
+
             <div className={s.modalHead}>
-              {openMilestone.done ? <Check size={18} /> : <Lock size={18} />}
-              <h2>{openMilestone.name}</h2>
+              <div
+                className={`${s.modalIcon} ${openMilestone.done ? s.modalIconDone : ""
+                  }`}
+              >
+                {openMilestone.done ? <Check size={20} /> : <TrendingUp size={20} />}
+              </div>
+              <div>
+                <h2>{openMilestone.name}</h2>
+                {openMilestone.description && (
+                  <p>{openMilestone.description}</p>
+                )}
+              </div>
             </div>
-            {openMilestone.description && (
-              <p className={s.modalSub}>{openMilestone.description}</p>
-            )}
 
             {openMilestone.courses?.length > 0 ? (
               <div className={s.courseList}>
                 <div className={s.courseHeader}>Suggested resources</div>
                 {openMilestone.courses.map((c, i) => (
                   <div key={i} className={s.course}>
-                    <BookOpen size={18} />
-                    <div style={{ flex: 1 }}>
+                    <div className={s.courseIcon}>
+                      <BookOpen size={16} />
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
                       <div className={s.courseTitle}>{c.title}</div>
                       <div className={s.courseMeta}>
-                        {c.provider}
+                        <span>{c.provider}</span>
                         {c.hours > 0 && (
                           <>
-                            {" · "}
-                            <Clock size={11} /> {c.hours}h
+                            <span className={s.dot}>·</span>
+                            <span>
+                              <Clock size={11} /> {c.hours}h
+                            </span>
                           </>
                         )}
                         {c.isFree && <span className={s.freeTag}>FREE</span>}
@@ -232,6 +272,7 @@ export default function SkillRoadmap() {
                         target="_blank"
                         rel="noopener noreferrer"
                         className={s.openLink}
+                        aria-label="Open resource"
                       >
                         <ExternalLink size={14} />
                       </a>
@@ -240,7 +281,7 @@ export default function SkillRoadmap() {
                 ))}
               </div>
             ) : (
-              <p style={{ color: "#6b7280", fontStyle: "italic" }}>
+              <p className={s.noCourses}>
                 No specific courses suggested. Build experience through projects.
               </p>
             )}
@@ -249,7 +290,7 @@ export default function SkillRoadmap() {
               <Button
                 onClick={() => handleToggle(openMilestone)}
                 disabled={togglingId === openMilestone._id}
-                variant={openMilestone.done ? "secondary" : "primary"}
+                variant={openMilestone.done ? "secondary" : "accent"}
               >
                 {openMilestone.done ? "Mark incomplete" : "Mark complete"}
               </Button>

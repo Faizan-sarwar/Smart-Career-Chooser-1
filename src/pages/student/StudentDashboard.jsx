@@ -1,120 +1,324 @@
+// src/pages/student/StudentDashboard.jsx
+//
+// Pulls a single aggregated payload from /users/dashboard.
+// Backend assembles latest assessment + active roadmap + notifications
+// into one response, so we get a snappy single-request dashboard.
+
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Target, Award, BookOpen, TrendingUp, Check, Trophy } from "lucide-react";
+import {
+  Target,
+  Award,
+  BookOpen,
+  TrendingUp,
+  Check,
+  Sparkles,
+  ArrowRight,
+  ClipboardCheck,
+  Map,
+  Trophy,
+  Bell,
+  AlertCircle,
+} from "lucide-react";
 import { Page, Grid, TwoCol } from "../../components/common/Page.jsx";
 import StatCard from "../../components/common/StatCard.jsx";
 import Card from "../../components/common/Card.jsx";
 import ProgressBar from "../../components/common/ProgressBar.jsx";
 import CircularProgress from "../../components/common/CircularProgress.jsx";
+import Button from "../../components/common/Button.jsx";
+import Badge from "../../components/common/Badge.jsx";
 import { useAuth } from "../../context/AuthContext.jsx";
-// IMPORT YOUR AXIOS API:
-import api from "../../lib/axios.js"; 
+import api from "../../lib/axios.js";
 import s from "./StudentDashboard.module.css";
 
 export default function StudentDashboard() {
   const { user } = useAuth();
-  
-  // 1. Setup State for our dynamic data
   const [data, setData] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // 2. Fetch the data from the backend when the dashboard loads
   useEffect(() => {
-    const fetchDashboardInfo = async () => {
-      try {
-        // This calls http://localhost:5000/api/users/dashboard
-        const response = await api.get('/users/dashboard'); 
-        setData(response.data);
-      } catch (err) {
-        console.error("Failed to fetch dashboard data:", err);
-        setError("Could not load dashboard data.");
-      } finally {
-        setIsLoading(false);
-      }
+    let mounted = true;
+    api
+      .get("/users/dashboard")
+      .then(({ data }) => {
+        if (mounted) setData(data);
+      })
+      .catch((err) => {
+        if (mounted) {
+          setError(
+            err.response?.data?.message || "Could not load your dashboard."
+          );
+        }
+      })
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
+    return () => {
+      mounted = false;
     };
-
-    fetchDashboardInfo();
   }, []);
 
-  // 3. Show a loading screen while waiting for the database
-  if (isLoading) {
+  if (loading) {
     return (
       <Page>
-        <div style={{ padding: "40px", textAlign: "center", color: "var(--color-muted)" }}>
-          <CircularProgress value={0} size={60} stroke={4} />
-          <p style={{ marginTop: "16px" }}>Loading your personalized dashboard, {user?.name?.split(" ")[0]}...</p>
+        <div className={s.loadingState}>
+          <div className={s.loaderRing} />
+          <p>Loading your dashboard…</p>
         </div>
       </Page>
     );
   }
 
-  if (error) {
-    return <Page><div style={{ color: "red", padding: "20px" }}>{error}</div></Page>;
+  if (error || !data) {
+    return (
+      <Page>
+        <div className={s.errorState}>
+          <AlertCircle size={32} />
+          <h3>Could not load dashboard</h3>
+          <p>{error}</p>
+        </div>
+      </Page>
+    );
   }
 
-  // 4. Render the page using the DYNAMIC data from the backend
+  const firstName = user?.name?.split(" ")[0] || "there";
+
+  // ── Pull from API payload ────────────────────────────────────────
+  const {
+    hasAssessment,
+    hasRoadmap,
+    assessmentProgress,
+    hollandCode,
+    topMatch,
+    stats,
+    milestones,
+    milestoneStats,
+    skills,
+    notifications,
+  } = data;
+
   return (
     <Page>
+      {/* ── Hero welcome ─────────────────────────────────────── */}
       <div className={s.welcome}>
         <div className={s.welcomeText}>
           <span className={s.eyebrow}>Student Portal</span>
-          <h2>Hi {user?.name?.split(" ")[0]} {user?.avatar || "👋"}</h2>
-          <p>Pick up where you left off — your next step is the career assessment.</p>
-          <Link to="/student/assessment"><button className={s.cta}>Continue assessment</button></Link>
+          <h2 className={s.welcomeTitle}>
+            Hi {firstName} <span className={s.wave}>👋</span>
+          </h2>
+          <p className={s.welcomeBlurb}>
+            {!hasAssessment
+              ? "Start with a quick career assessment — 63 questions to map your strengths."
+              : !hasRoadmap
+                ? `You're a great match for ${topMatch?.title}. Generate a roadmap to start building skills.`
+                : `You've completed ${milestoneStats.completed} of ${milestoneStats.total} milestones. Keep the momentum going.`}
+          </p>
+          <div className={s.welcomeActions}>
+            {!hasAssessment ? (
+              <Link to="/student/assessment">
+                <Button variant="accent" size="lg">
+                  <ClipboardCheck size={16} /> Start assessment
+                </Button>
+              </Link>
+            ) : !hasRoadmap ? (
+              <Link to="/student/recommendations">
+                <Button variant="accent" size="lg">
+                  <Sparkles size={16} /> See recommendations
+                </Button>
+              </Link>
+            ) : (
+              <Link to="/student/roadmap">
+                <Button variant="accent" size="lg">
+                  <Map size={16} /> Continue roadmap
+                </Button>
+              </Link>
+            )}
+          </div>
         </div>
         <div className={s.welcomeRight}>
-          <CircularProgress value={data.assessmentProgress} size={140} stroke={12} label="Profile" />
+          <div className={s.welcomeRingWrap}>
+            <CircularProgress
+              value={assessmentProgress}
+              size={150}
+              stroke={11}
+              label="Profile"
+            />
+          </div>
         </div>
       </div>
 
+      {/* ── Stats grid ───────────────────────────────────────── */}
       <Grid cols={4}>
-        <StatCard label="Career match" value={`${data.stats.match}%`} delta="+4 this week" Icon={Target} spark={[60,68,72,70,78,82,87]} />
-        <StatCard label="Assessment" value={`${data.assessmentProgress}%`} delta={data.assessmentProgress === 100 ? "Completed" : "Resume now"} Icon={Award} accent />
-        <StatCard label="Courses in progress" value={data.stats.courses} delta="+1 this month" Icon={BookOpen} spark={[1,1,2,2,3,3,3]} />
-        <StatCard label="Skill growth" value={data.stats.growth} delta="last 30 days" Icon={TrendingUp} spark={[5,8,10,12,14,16,18]} />
+        <StatCard
+          label="Top match"
+          value={hasAssessment ? `${stats.match}%` : "—"}
+          delta={topMatch?.title || "Take assessment"}
+          Icon={Target}
+          spark={hasAssessment ? [55, 62, 68, 72, 78, stats.match] : [0, 0, 0, 0, 0, 0]}
+        />
+        <StatCard
+          label="Holland code"
+          value={hollandCode || "—"}
+          delta={hasAssessment ? "Personality profile" : "Not assessed"}
+          Icon={Award}
+          accent
+        />
+        <StatCard
+          label="Milestones done"
+          value={hasRoadmap ? `${milestoneStats.completed}/${milestoneStats.total}` : "0"}
+          delta={hasRoadmap ? `${milestoneStats.pct}% complete` : "No roadmap yet"}
+          Icon={BookOpen}
+          spark={
+            hasRoadmap
+              ? [0, 1, 2, milestoneStats.completed, milestoneStats.completed, milestoneStats.completed]
+              : [0, 0, 0, 0, 0, 0]
+          }
+        />
+        <StatCard
+          label="Profile strength"
+          value={`${assessmentProgress}%`}
+          delta={assessmentProgress === 100 ? "Complete" : "In progress"}
+          Icon={TrendingUp}
+          spark={[20, 35, 50, 65, 80, assessmentProgress]}
+        />
       </Grid>
 
-      <TwoCol>
-        <Card title="Your career milestones" action={<span className={s.badgeGold}><Trophy size={12} /> {data.milestones.filter(m => m.done).length} unlocked</span>}>
-          <ul className={s.timeline}>
-            {data.milestones.map((m, i) => (
-              <li key={i} className={s.tlItem}>
-                <div className={`${s.tlDot} ${m.done ? s.tlDone : ""}`}>
-                  {m.done ? <Check size={14} /> : i + 1}
-                </div>
-                <div className={s.tlBody}>
-                  <div className={s.tlTitle}>{m.title}</div>
-                  <div className={s.tlMeta}>{m.meta}</div>
-                </div>
-                {m.done && <span className={s.medal}><Trophy size={14} /></span>}
-              </li>
-            ))}
-          </ul>
+      {/* ── Two-column main ──────────────────────────────────── */}
+      <TwoCol ratio="2:1">
+        <Card
+          title={hasRoadmap ? "Your roadmap progress" : "Get started"}
+          action={
+            hasRoadmap && (
+              <Link to="/student/roadmap" className={s.cardLink}>
+                View all <ArrowRight size={14} />
+              </Link>
+            )
+          }
+        >
+          {!hasAssessment ? (
+            <EmptyStep
+              icon={ClipboardCheck}
+              title="Take the career assessment"
+              text="63 research-backed questions covering personality (RIASEC), skills, and interests."
+              cta="Start assessment"
+              link="/student/assessment"
+            />
+          ) : !hasRoadmap ? (
+            <EmptyStep
+              icon={Sparkles}
+              title="Generate your skill roadmap"
+              text={`Pick a career like ${topMatch?.title} and get a personalized 12-month learning plan.`}
+              cta="See recommendations"
+              link="/student/recommendations"
+            />
+          ) : (
+            <ul className={s.timeline}>
+              {milestones.map((m, i) => (
+                <li key={i} className={s.tlItem}>
+                  <div className={`${s.tlDot} ${m.done ? s.tlDone : ""}`}>
+                    {m.done ? <Check size={14} /> : i + 1}
+                  </div>
+                  <div className={s.tlBody}>
+                    <div className={`${s.tlTitle} ${m.done ? s.tlTitleDone : ""}`}>
+                      {m.title}
+                    </div>
+                    <div className={s.tlMeta}>{m.meta}</div>
+                  </div>
+                  {m.done && (
+                    <span className={s.medal} title="Completed">
+                      <Trophy size={13} />
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
         </Card>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          <Card title="Recent skill progress">
-            <div className={s.skills}>
-              {data.skills.map((sk) => <ProgressBar key={sk.name} label={sk.name} value={sk.value} />)}
-            </div>
-          </Card>
-          
-          <Card title="Notifications">
-            <div className={s.notes}>
-              {data.notifications.map((n, i) => (
-                <div key={i} className={s.note}>
-                  <span className={s.noteDot} style={{ background: n.color }} />
-                  <div>
-                    <div>{n.text}</div>
-                    <div className={s.noteTime}>{n.time}</div>
+        <div className={s.sideCol}>
+          {skills.length > 0 && (
+            <Card title="Your top skills">
+              <div className={s.skills}>
+                {skills.map((sk) => (
+                  <ProgressBar key={sk.name} label={sk.name} value={sk.value} />
+                ))}
+              </div>
+            </Card>
+          )}
+
+          <Card
+            title="Notifications"
+            action={
+              notifications.length > 0 && (
+                <span className={s.notifBadge}>
+                  <Bell size={11} /> {notifications.length}
+                </span>
+              )
+            }
+          >
+            {notifications.length === 0 ? (
+              <p style={{ color: "var(--color-muted)", fontSize: 13, margin: 0 }}>
+                You're all caught up.
+              </p>
+            ) : (
+              <div className={s.notes}>
+                {notifications.map((n, i) => (
+                  <div key={i} className={s.note}>
+                    <span className={s.noteDot} style={{ background: n.color }} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div className={s.noteText}>{n.text}</div>
+                      <div className={s.noteTime}>{n.time}</div>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </Card>
         </div>
       </TwoCol>
+
+      {hasAssessment && topMatch && (
+        <Card
+          title="Your top career match"
+          action={<Badge tone="primary">{stats.match}% match</Badge>}
+        >
+          <div className={s.matchCard}>
+            <div className={s.matchHead}>
+              <h3 className={s.matchTitle}>{topMatch.title}</h3>
+              <div className={s.matchMeta}>
+                {topMatch.cluster && <Badge tone="default">{topMatch.cluster}</Badge>}
+                {topMatch.salary && <span>💰 {topMatch.salary}</span>}
+              </div>
+            </div>
+            {topMatch.reasoning && (
+              <p className={s.matchReason}>{topMatch.reasoning}</p>
+            )}
+            <Link to="/student/recommendations">
+              <Button variant="secondary" size="sm">
+                View full breakdown <ArrowRight size={14} />
+              </Button>
+            </Link>
+          </div>
+        </Card>
+      )}
     </Page>
+  );
+}
+
+function EmptyStep({ icon: Icon, title, text, cta, link }) {
+  return (
+    <div className={s.emptyStep}>
+      <div className={s.emptyStepIcon}>
+        <Icon size={24} />
+      </div>
+      <h3 className={s.emptyStepTitle}>{title}</h3>
+      <p className={s.emptyStepText}>{text}</p>
+      <Link to={link}>
+        <Button variant="accent">
+          {cta} <ArrowRight size={14} />
+        </Button>
+      </Link>
+    </div>
   );
 }

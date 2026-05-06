@@ -1,73 +1,410 @@
+/* src/pages/student/StudentDashboard.module.css */
+
+.loadingState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 50vh;
+  gap: 18px;
+  color: var(--color-muted);
+}
+
+.loaderRing {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 4px solid var(--color-primary-soft);
+  border-top-color: var(--color-primary);
+  animation: ccSpin 0.9s linear infinite;
+}
+
+/* =========================================================================
+   WELCOME HERO
+   ========================================================================= */
+
 .welcome {
   background:
-    radial-gradient(600px 300px at 100% 0%, rgba(245,158,11,.30), transparent 60%),
-    linear-gradient(120deg, var(--color-primary), var(--color-primary-dark));
-  color: #fff;
-  border-radius: 18px;
-  padding: 28px 32px;
-  display: flex; justify-content: space-between; align-items: center;
-  flex-wrap: wrap; gap: 20px;
+    radial-gradient(
+      700px 400px at 100% 0%,
+      rgba(249, 115, 22, 0.28),
+      transparent 55%
+    ),
+    linear-gradient(
+      135deg,
+      var(--color-primary-darker) 0%,
+      var(--color-primary-dark) 50%,
+      var(--color-primary) 100%
+    );
+  color: white;
+  border-radius: var(--radius-lg);
+  padding: 32px 36px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 24px;
   box-shadow: var(--shadow-glow);
   position: relative;
   overflow: hidden;
 }
-.welcomeText { flex: 1; min-width: 280px; }
-.welcomeRight { display: grid; place-items: center; }
+
+.welcome::after {
+  content: "";
+  position: absolute;
+  bottom: -120px;
+  left: 30%;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(
+    circle,
+    rgba(20, 184, 166, 0.25) 0%,
+    transparent 60%
+  );
+  pointer-events: none;
+}
+
+.welcomeText {
+  flex: 1;
+  min-width: 280px;
+  position: relative;
+  z-index: 1;
+}
+
+.welcomeRight {
+  display: grid;
+  place-items: center;
+  position: relative;
+  z-index: 1;
+  color: white;
+}
+
+.welcomeRing :global(.ccCircularValue),
+.welcomeRing svg circle:first-child {
+  /* nothing — using inline because of CSS modules limitations */
+}
+
 .eyebrow {
   display: inline-block;
-  padding: 4px 12px; border-radius: 999px;
-  background: rgba(255,255,255,.18);
-  font-size: 11px; text-transform: uppercase; letter-spacing: .12em; font-weight: 700;
-  margin-bottom: 12px;
+  padding: 5px 12px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.2);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-weight: 700;
+  margin-bottom: 14px;
+  backdrop-filter: blur(8px);
 }
-.welcome h2 { color: #fff; font-size: 28px; margin-bottom: 8px; letter-spacing: -.02em; }
-.welcome p { opacity: .92; max-width: 540px; margin-bottom: 18px; }
-.cta {
-  background: var(--color-accent); color: #fff;
-  border: none; padding: 12px 22px; border-radius: 12px;
-  font-weight: 700; cursor: pointer;
-  box-shadow: 0 10px 24px -8px rgba(245,158,11,.6);
-  transition: transform .15s ease;
+
+.welcomeTitle {
+  color: white;
+  font-size: 32px;
+  margin-bottom: 10px;
+  letter-spacing: -0.025em;
 }
-.cta:hover { transform: translateY(-1px); }
 
-.skills { display: flex; flex-direction: column; gap: 14px; }
+.wave {
+  display: inline-block;
+  animation: ccWave 2.4s ease-in-out infinite;
+  transform-origin: 70% 70%;
+}
 
-.timeline { display: flex; flex-direction: column; gap: 14px; list-style: none; padding: 0; margin: 0; }
-.tlItem { display: flex; gap: 14px; align-items: center; }
+@keyframes ccWave {
+  0%,
+  60%,
+  100% {
+    transform: rotate(0deg);
+  }
+  10%,
+  30% {
+    transform: rotate(14deg);
+  }
+  20% {
+    transform: rotate(-8deg);
+  }
+  40% {
+    transform: rotate(-4deg);
+  }
+  50% {
+    transform: rotate(10deg);
+  }
+}
+
+.welcomeBlurb {
+  color: rgba(255, 255, 255, 0.92);
+  max-width: 540px;
+  margin-bottom: 20px;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.welcomeActions {
+  display: flex;
+  gap: 10px;
+}
+
+/* =========================================================================
+   SIDE COLUMN (skills + notifications)
+   ========================================================================= */
+
+.sideCol {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.skills {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* =========================================================================
+   TIMELINE
+   ========================================================================= */
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.tlItem {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+
 .tlDot {
-  width: 30px; height: 30px; border-radius: 50%;
-  background: var(--color-primary-soft); color: var(--color-primary-dark);
-  display: grid; place-items: center; font-weight: 700; flex-shrink: 0;
-  border: 2px solid var(--color-primary);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--color-primary-soft);
+  color: var(--color-primary-darker);
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  flex-shrink: 0;
   font-size: 13px;
-}
-.tlDone { background: var(--color-primary); color: #fff; }
-.tlBody { flex: 1; }
-.tlTitle { font-weight: 600; font-size: 14px; }
-.tlMeta { font-size: 12px; color: var(--color-muted); margin-top: 2px; }
-.medal {
-  width: 32px; height: 32px; border-radius: 50%;
-  background: linear-gradient(135deg, #fcd34d, var(--color-accent));
-  color: #fff; display: grid; place-items: center;
-  box-shadow: 0 6px 14px -4px rgba(245,158,11,.6);
-  animation: ccPop .4s ease both;
-}
-.badgeGold {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 4px 10px; border-radius: 999px;
-  background: var(--color-accent-soft); color: var(--color-accent-dark);
-  font-size: 12px; font-weight: 700;
+  border: 2px solid var(--color-primary-soft);
+  transition: all 0.2s ease;
 }
 
-.notes { display: flex; flex-direction: column; gap: 10px; }
+.tlDone {
+  background: linear-gradient(
+    135deg,
+    var(--color-primary) 0%,
+    var(--color-primary-dark) 100%
+  );
+  color: white;
+  border-color: var(--color-primary);
+}
+
+.tlBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.tlTitle {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--color-text);
+  letter-spacing: -0.005em;
+}
+
+.tlTitleDone {
+  text-decoration: line-through;
+  color: var(--color-muted);
+}
+
+.tlMeta {
+  font-size: 12px;
+  color: var(--color-muted);
+  margin-top: 2px;
+}
+
+.medal {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #fcd34d 0%, var(--color-accent) 100%);
+  color: white;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 4px 10px -2px rgba(249, 115, 22, 0.5);
+  animation: ccPop 0.4s var(--ease-bounce);
+}
+
+/* =========================================================================
+   EMPTY STEP (when no assessment / no roadmap)
+   ========================================================================= */
+
+.emptyStep {
+  text-align: center;
+  padding: 28px 16px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.emptyStepIcon {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(
+    135deg,
+    var(--color-primary-soft) 0%,
+    var(--color-primary-faint) 100%
+  );
+  color: var(--color-primary-dark);
+  display: grid;
+  place-items: center;
+  margin-bottom: 4px;
+}
+
+.emptyStepTitle {
+  font-size: 17px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.emptyStepText {
+  color: var(--color-muted);
+  max-width: 360px;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+/* =========================================================================
+   NOTIFICATIONS
+   ========================================================================= */
+
+.notes {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
 .note {
-  display: flex; gap: 10px; align-items: flex-start;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
   padding: 12px 14px;
   background: var(--color-bg);
-  border-radius: 12px;
+  border-radius: var(--radius);
   font-size: 13px;
   border: 1px solid var(--color-border);
+  transition: all 0.2s ease;
 }
-.noteDot { width: 8px; height: 8px; border-radius: 50%; margin-top: 6px; flex-shrink: 0; }
-.noteTime { color: var(--color-muted); font-size: 12px; margin-top: 2px; }
+
+.note:hover {
+  border-color: var(--color-primary-soft);
+  background: var(--color-primary-faint);
+}
+
+.noteDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-top: 6px;
+  flex-shrink: 0;
+}
+
+.noteText {
+  color: var(--color-text);
+  line-height: 1.5;
+}
+
+.noteTime {
+  color: var(--color-muted);
+  font-size: 11px;
+  margin-top: 3px;
+}
+
+.notifBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  background: var(--color-accent-soft);
+  color: var(--color-accent-dark);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* =========================================================================
+   MATCH CARD
+   ========================================================================= */
+
+.matchCard {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.matchHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.matchTitle {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.matchMeta {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  font-size: 13px;
+  color: var(--color-muted);
+}
+
+.matchReason {
+  background: var(--color-primary-faint);
+  border-left: 3px solid var(--color-primary);
+  padding: 14px 16px;
+  border-radius: var(--radius);
+  color: var(--color-text);
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.cardLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-primary-dark);
+}
+
+.cardLink:hover {
+  color: var(--color-primary-darker);
+}
+
+/* =========================================================================
+   RESPONSIVE
+   ========================================================================= */
+
+@media (max-width: 640px) {
+  .welcome {
+    padding: 24px 20px;
+  }
+
+  .welcomeTitle {
+    font-size: 26px;
+  }
+}

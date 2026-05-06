@@ -1,287 +1,398 @@
-import React, { useMemo, useState } from "react";
-import { Link, Navigate, useNavigate } from "react-router-dom";
-import { GraduationCap, Compass, ShieldCheck, ChevronLeft, ChevronRight, Check } from "lucide-react";
-import s from "./Auth.module.css";
-import Button from "../../components/common/Button.jsx";
-import { useAuth } from "../../context/AuthContext.jsx";
+// src/pages/auth/RegisterPage.jsx
+//
+// Enterprise-grade registration:
+//   - Real-time validation with visual feedback
+//   - Password strength meter with requirement checklist
+//   - Show/hide password
+//   - Role selector with icons
+//   - University field for students (matches backend User schema)
+//   - Full keyboard accessibility
+//   - Loading state with disabled button until form is valid
 
-// Roles definition for step 1
+import React, { useState, useMemo } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import {
+  GraduationCap,
+  Mail,
+  Lock,
+  User as UserIcon,
+  AlertCircle,
+  Sparkles,
+  Users,
+  ShieldCheck,
+  Eye,
+  EyeOff,
+  Check,
+  X,
+  Loader2,
+  Building2,
+} from "lucide-react";
+import Button from "../../components/common/Button.jsx";
+import { Field, Input } from "../../components/common/Field.jsx";
+import { useAuth } from "../../context/AuthContext.jsx";
+import api from "../../lib/axios.js";
+import s from "./Auth.module.css";
+
 const ROLES = [
-  { id: "student", label: "Student", desc: "Discover careers, take assessments, get matched.", Icon: GraduationCap },
-  { id: "mentor", label: "Mentor", desc: "Guide mentees and host live sessions.", Icon: Compass },
-  { id: "admin", label: "Admin", desc: "Oversee the platform and manage users.", Icon: ShieldCheck },
+  { value: "Student", label: "Student", Icon: GraduationCap },
+  { value: "Mentor", label: "Mentor", Icon: Users },
+  { value: "Admin", label: "Admin", Icon: ShieldCheck },
 ];
 
-const AVATARS = ["🦊", "🐼", "🐨", "🦁", "🐸", "🦉", "🦄", "🐧"];
-const MAJORS = ["Computer Science", "Data Analytics", "UX Design", "Cybersecurity", "Cloud Engineering", "Business", "Marketing", "Other"];
-const INTERESTS = ["AI/ML", "Web Dev", "Design", "Cybersecurity", "Cloud", "Data", "Product", "Marketing", "Finance"];
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-function strengthOf(pw) {
-  let score = 0;
-  if (pw.length >= 6) score++;
-  if (pw.length >= 10) score++;
-  if (/[A-Z]/.test(pw) && /[a-z]/.test(pw)) score++;
-  if (/\d/.test(pw)) score++;
-  if (/[^A-Za-z0-9]/.test(pw)) score++;
-  return Math.min(score, 4);
-}
-
-function FloatingInput({ label, type = "text", value, onChange, autoComplete }) {
-  const [focus, setFocus] = useState(false);
-  const filled = focus || value;
-  return (
-    <div className={`${s.fl} ${filled ? s.flFilled : ""}`}>
-      <input
-        type={type}
-        value={value}
-        onChange={onChange}
-        autoComplete={autoComplete}
-        onFocus={() => setFocus(true)}
-        onBlur={() => setFocus(false)}
-      />
-      <label>{label}</label>
-    </div>
-  );
-}
+const PW_REQUIREMENTS = [
+  { id: "len", label: "8+ characters", test: (p) => p.length >= 8 },
+  { id: "upper", label: "Uppercase letter", test: (p) => /[A-Z]/.test(p) },
+  { id: "lower", label: "Lowercase letter", test: (p) => /[a-z]/.test(p) },
+  { id: "num", label: "Number", test: (p) => /\d/.test(p) },
+];
 
 export default function RegisterPage() {
-  const { user, register } = useAuth();
   const navigate = useNavigate();
+  const { login } = useAuth();
 
-  const [step, setStep] = useState(1);
-  const [direction, setDirection] = useState(1);
-  const [isLoading, setIsLoading] = useState(false);
-
-  // Form State
-  const [role, setRole] = useState("student"); // Changed default to lowercase to match ENUM
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [avatar, setAvatar] = useState(AVATARS[0]);
-  const [major, setMajor] = useState(MAJORS[0]);
-  const [interests, setInterests] = useState([]);
+  const [university, setUniversity] = useState("");
+  const [role, setRole] = useState("Student");
+  const [showPassword, setShowPassword] = useState(false);
+  const [touched, setTouched] = useState({});
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const pwScore = useMemo(() => strengthOf(password), [password]);
-  const pwLabel = ["Too weak", "Weak", "Okay", "Good", "Strong"][pwScore];
+  // ── Validation ───────────────────────────────────────────────────
+  const nameValid = name.trim().length >= 2;
+  const emailValid = EMAIL_REGEX.test(email);
 
-  if (user) return <Navigate to={`/${user.role}/dashboard`} replace />;
+  // Password rules: a tier system based on requirements met
+  const reqsMet = useMemo(
+    () => PW_REQUIREMENTS.filter((r) => r.test(password)).length,
+    [password]
+  );
 
-  const next = () => {
-    setError("");
-    if (step === 2) {
-      if (!name.trim()) return setError("Please enter your name.");
-      if (!/^\S+@\S+\.\S+$/.test(email)) return setError("Please enter a valid email.");
-      if (pwScore < 2) return setError("Please choose a stronger password.");
-    }
-    setDirection(1);
-    setStep((v) => Math.min(v + 1, 3));
-  };
+  const strength = useMemo(() => {
+    if (password.length === 0) return { level: 0, label: "", color: "" };
+    if (password.length < 6) return { level: 1, label: "Too short", color: "var(--color-danger)" };
+    if (reqsMet <= 1) return { level: 1, label: "Weak", color: "var(--color-danger)" };
+    if (reqsMet === 2) return { level: 2, label: "Fair", color: "var(--color-warning)" };
+    if (reqsMet === 3) return { level: 3, label: "Good", color: "var(--color-info)" };
+    return { level: 4, label: "Strong", color: "var(--color-success)" };
+  }, [password, reqsMet]);
 
-  const back = () => {
-    setDirection(-1);
-    setStep((v) => Math.max(v - 1, 1));
-  };
+  // Backend requires min 6 chars; enterprise flow asks for stronger but accepts ≥6
+  const passwordValid = password.length >= 6;
 
-  const finish = async () => {
-    setIsLoading(true);
+  const universityValid = role === "Student" ? university.trim().length >= 2 : true;
+  const formValid = nameValid && emailValid && passwordValid && universityValid;
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setTouched({ name: true, email: true, password: true, university: true });
+    if (!formValid) return;
+
+    setLoading(true);
     setError("");
 
     try {
-      // Create the payload dynamically based on the role to keep the DB clean
       const payload = {
         name: name.trim(),
         email: email.trim().toLowerCase(),
         password,
-        role: role.toLowerCase(), // Ensure strict lowercase for backend
-        avatar,
-        // Only send university and career interests if the user is a student
-        ...(role === 'student' && { university: major, careerInterests: interests }),
-        // If they are a mentor, reuse the 'major' variable to store their expertise
-        ...(role === 'mentor' && { expertise: major })
+        role,
+        ...(role === "Student" && { university: university.trim() }),
+        ...(role === "Mentor" && { university: university.trim() }), // backend reuses this for expertise
       };
 
-      await register(payload);
-      navigate('/login');
+      const { data } = await api.post("/auth/register", payload);
 
-    } catch (err) {
-      console.error("Full Registration Error:", err);
-
-      if (err.code === 'ERR_NETWORK') {
-        setError("Cannot connect to the server. Is your Node.js backend running?");
-      } else if (err.response && err.response.data && err.response.data.message) {
-        setError(`Error: ${err.response.data.message}`);
+      if (login) {
+        login(data, data.token);
       } else {
-        setError("An unexpected error occurred. Please check the browser console.");
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(data));
+      }
+
+      const r = (data.role || "student").toLowerCase();
+      navigate(`/${r}/dashboard`, { replace: true });
+    } catch (err) {
+      const msg = err.response?.data?.message;
+      if (msg?.toLowerCase().includes("already exists")) {
+        setError("An account with this email already exists. Try signing in instead.");
+      } else {
+        setError(msg || "Registration failed. Please try again.");
       }
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
-  const toggleInterest = (i) => setInterests((arr) =>
-    arr.includes(i) ? arr.filter((x) => x !== i) : [...arr, i]
-  );
+  // ── Field-level error messages ───────────────────────────────────
+  const nameError = touched.name && name && !nameValid
+    ? "Name must be at least 2 characters" : "";
+  const emailError = touched.email && email && !emailValid
+    ? "Enter a valid email address" : "";
+  const passwordError = touched.password && password && !passwordValid
+    ? "Password must be at least 6 characters" : "";
+  const universityError = touched.university && role === "Student" && university && !universityValid
+    ? "Please enter your institution" : "";
 
   return (
-    <div className={s.wrap}>
-      <aside className={s.hero}>
-        <div className={s.brand}><div className={s.logo}>CC</div> Career Chooser</div>
-        <div className={s.heroArt} aria-hidden>
-          <svg viewBox="0 0 400 300" width="100%">
-            <defs>
-              <linearGradient id="g1" x1="0" x2="1" y1="0" y2="1">
-                <stop offset="0%" stopColor="#52a447" />
-                <stop offset="100%" stopColor="#f59e0b" />
-              </linearGradient>
-            </defs>
-            <path d="M20,250 Q120,180 200,210 T380,80" fill="none" stroke="url(#g1)" strokeWidth="4" strokeLinecap="round">
-              <animate attributeName="stroke-dasharray" from="0,800" to="800,0" dur="3s" repeatCount="indefinite" />
-            </path>
-            {[[20, 250], [140, 210], [260, 160], [380, 80]].map(([x, y], i) => (
-              <circle key={i} cx={x} cy={y} r="8" fill="#fff" stroke="url(#g1)" strokeWidth="3">
-                <animate attributeName="r" values="6;10;6" dur="2s" begin={`${i * 0.3}s`} repeatCount="indefinite" />
-              </circle>
-            ))}
-          </svg>
+    <div className={s.shell}>
+      <div className={s.brandSide}>
+        <div className={s.brandInner}>
+          <div className={s.logo}>
+            <GraduationCap size={26} />
+          </div>
+          <h1 className={s.brandTitle}>Start your journey</h1>
+          <p className={s.brandSubtitle}>
+            Join hundreds of Pakistani students discovering their ideal career path
+            with science-backed assessments and AI-powered guidance.
+          </p>
+          <div className={s.featureList}>
+            <div className={s.feature}>
+              <Sparkles size={16} /> Science-based RIASEC personality assessment
+            </div>
+            <div className={s.feature}>
+              <Sparkles size={16} /> Pakistan-specific career recommendations
+            </div>
+            <div className={s.feature}>
+              <Sparkles size={16} /> Free roadmap with local learning resources
+            </div>
+          </div>
         </div>
-        <div>
-          <h2 className={s.heroTitle}>Build a career roadmap that grows with you.</h2>
-          <p className={s.heroSub}>Three quick steps and your personalized journey begins.</p>
+        <div className={s.brandFooter}>
+          University of Gujrat · Final Year Project 2026
         </div>
-        <div className={s.heroFoot}>© {new Date().getFullYear()} Career Chooser</div>
-      </aside>
+      </div>
 
-      <div className={s.formArea}>
-        <div className={s.card}>
-          <div className={s.stepper}>
-            {[1, 2, 3].map((n) => (
-              <div key={n} className={`${s.stepDot} ${step >= n ? s.stepDotDone : ""}`}>
-                {step > n ? <Check size={14} /> : n}
+      <div className={s.formSide}>
+        <div className={s.formCard}>
+          <h2 className={s.formTitle}>Create your account</h2>
+          <p className={s.formSubtitle}>
+            Free, takes under a minute. No credit card required.
+          </p>
+
+          <form onSubmit={handleSubmit} className={s.form} noValidate>
+            <Field label="I am a" required>
+              <div className={s.roleSelector} role="radiogroup">
+                {ROLES.map(({ value, label, Icon }) => (
+                  <button
+                    key={value}
+                    type="button"
+                    role="radio"
+                    aria-checked={role === value}
+                    className={`${s.roleBtn} ${role === value ? s.roleBtnActive : ""}`}
+                    onClick={() => setRole(value)}
+                  >
+                    <span className={s.roleBtnIcon}>
+                      <Icon size={16} />
+                    </span>
+                    <span className={s.roleBtnLabel}>{label}</span>
+                  </button>
+                ))}
               </div>
-            ))}
-          </div>
+            </Field>
 
-          <div key={step} className={direction > 0 ? s.slideRight : s.slideLeft}>
-            {step === 1 && (
-              <>
-                <h1 className={s.title}>Choose your role</h1>
-                <p className={s.sub}>Pick the experience that fits you best.</p>
-                <div className={s.roleGrid}>
-                  {ROLES.map(({ id, label, desc, Icon }) => (
-                    <button key={id} type="button"
-                      className={`${s.roleCard} ${role === id ? s.roleCardActive : ""}`}
-                      onClick={() => setRole(id)}>
-                      <Icon size={28} />
-                      <div className={s.roleCardLabel}>{label}</div>
-                      <div className={s.roleCardDesc}>{desc}</div>
-                    </button>
-                  ))}
+            <Field label="Full name" required>
+              <div className={s.inputGroup}>
+                <UserIcon size={16} className={s.inputIcon} />
+                <Input
+                  type="text"
+                  placeholder="Faizan Sarwar"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  onBlur={() => setTouched((t) => ({ ...t, name: true }))}
+                  required
+                  autoComplete="name"
+                  className={
+                    touched.name && nameValid
+                      ? s.inputValid
+                      : nameError
+                        ? s.inputInvalid
+                        : ""
+                  }
+                />
+              </div>
+              {nameError && (
+                <span className={`${s.inlineMsg} ${s.inlineMsgError}`}>
+                  <AlertCircle size={12} /> {nameError}
+                </span>
+              )}
+            </Field>
+
+            <Field label="Email" required>
+              <div className={s.inputGroup}>
+                <Mail size={16} className={s.inputIcon} />
+                <Input
+                  type="email"
+                  placeholder="you@university.edu.pk"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  onBlur={() => setTouched((t) => ({ ...t, email: true }))}
+                  required
+                  autoComplete="email"
+                  className={
+                    touched.email && emailValid
+                      ? s.inputValid
+                      : emailError
+                        ? s.inputInvalid
+                        : ""
+                  }
+                />
+              </div>
+              {emailError && (
+                <span className={`${s.inlineMsg} ${s.inlineMsgError}`}>
+                  <AlertCircle size={12} /> {emailError}
+                </span>
+              )}
+            </Field>
+
+            {role === "Student" && (
+              <Field label="University / Institution" required>
+                <div className={s.inputGroup}>
+                  <Building2 size={16} className={s.inputIcon} />
+                  <Input
+                    type="text"
+                    placeholder="University of Gujrat"
+                    value={university}
+                    onChange={(e) => setUniversity(e.target.value)}
+                    onBlur={() => setTouched((t) => ({ ...t, university: true }))}
+                    required
+                    className={
+                      touched.university && universityValid && university
+                        ? s.inputValid
+                        : universityError
+                          ? s.inputInvalid
+                          : ""
+                    }
+                  />
                 </div>
-              </>
+                {universityError && (
+                  <span className={`${s.inlineMsg} ${s.inlineMsgError}`}>
+                    <AlertCircle size={12} /> {universityError}
+                  </span>
+                )}
+              </Field>
             )}
 
-            {step === 2 && (
-              <>
-                <h1 className={s.title}>Account details</h1>
-                <p className={s.sub}>We'll keep your info private and secure.</p>
-                <div className={s.form}>
-                  <FloatingInput label="Full name" value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" />
-                  <FloatingInput label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" />
-                  <FloatingInput label="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" />
-                  <div className={s.meter}>
-                    <div className={s.meterTrack}>
-                      {[0, 1, 2, 3].map((i) => (
-                        <div key={i} className={`${s.meterBar} ${i < pwScore ? s[`mb${pwScore}`] : ""}`} />
-                      ))}
-                    </div>
-                    <div className={s.meterLabel}>{password ? pwLabel : "Password strength"}</div>
-                  </div>
+            {role === "Mentor" && (
+              <Field label="Area of expertise" hint="e.g. Software Engineering, Product Design" required>
+                <div className={s.inputGroup}>
+                  <Building2 size={16} className={s.inputIcon} />
+                  <Input
+                    type="text"
+                    placeholder="Software Engineering"
+                    value={university}
+                    onChange={(e) => setUniversity(e.target.value)}
+                    required
+                  />
                 </div>
-              </>
+              </Field>
             )}
 
-            {step === 3 && (
-              <>
-                <h1 className={s.title}>Personalize</h1>
-                <p className={s.sub}>Pick an avatar and tell us about yourself.</p>
-                <div className={s.form}>
-                  {/* EVERYONE picks an avatar */}
-                  <div>
-                    <div className={s.fieldLabel}>Avatar</div>
-                    <div className={s.avatarRow}>
-                      {AVATARS.map((a) => (
-                        <button key={a} type="button"
-                          className={`${s.avatarPick} ${avatar === a ? s.avatarPickActive : ""}`}
-                          onClick={() => setAvatar(a)}>{a}</button>
-                      ))}
-                    </div>
-                  </div>
+            <Field label="Password" required>
+              <div className={s.inputGroup}>
+                <Lock size={16} className={s.inputIcon} />
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="At least 8 characters"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  onBlur={() => setTouched((t) => ({ ...t, password: true }))}
+                  required
+                  minLength={6}
+                  autoComplete="new-password"
+                  className={passwordError ? s.inputInvalid : ""}
+                  style={{ paddingRight: 42 }}
+                />
+                <button
+                  type="button"
+                  className={s.passwordToggle}
+                  onClick={() => setShowPassword((v) => !v)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
 
-                  {/* ONLY STUDENTS see this section */}
-                  {role === 'student' && (
-                    <>
-                      <div>
-                        <div className={s.fieldLabel}>Major / focus</div>
-                        <select className={s.select} value={major} onChange={(e) => setMajor(e.target.value)}>
-                          {MAJORS.map((m) => <option key={m}>{m}</option>)}
-                        </select>
-                      </div>
-                      <div>
-                        <div className={s.fieldLabel}>Career interests</div>
-                        <div className={s.chipRow}>
-                          {INTERESTS.map((i) => (
-                            <button key={i} type="button"
-                              className={`${s.chip} ${interests.includes(i) ? s.chipActive : ""}`}
-                              onClick={() => toggleInterest(i)}>{i}</button>
-                          ))}
-                        </div>
-                      </div>
-                    </>
-                  )}
-
-                  {/* ONLY MENTORS see this section */}
-                  {role === 'mentor' && (
-                    <div>
-                      <div className={s.fieldLabel}>Industry Expertise</div>
-                      {/* Reusing the 'major' state variable to store expertise to save state management overhead */}
-                      <input 
-                        type="text"
-                        className={s.input}
-                        style={{width: '100%', padding: '12px', border: '1px solid var(--color-border)', borderRadius: '8px', background: 'var(--color-bg)'}}
-                        placeholder="e.g., Senior Software Engineer..." 
-                        value={major} 
-                        onChange={(e) => setMajor(e.target.value)} 
+              {/* Password strength meter */}
+              {password.length > 0 && (
+                <div className={s.passwordMeter}>
+                  <div className={s.meterTrack}>
+                    {[1, 2, 3, 4].map((seg) => (
+                      <span
+                        key={seg}
+                        className={`${s.meterSegment} ${seg <= strength.level ? s.meterSegmentActive : ""
+                          }`}
+                        style={{
+                          color: seg <= strength.level ? strength.color : undefined,
+                        }}
                       />
-                    </div>
-                  )}
-
-                  {/* ADMINS see nothing extra here, keeping the flow fast and simple! */}
+                    ))}
+                  </div>
+                  <div
+                    className={s.meterLabel}
+                    style={{ color: strength.color || "var(--color-muted)" }}
+                  >
+                    <span className={s.meterStrength}>{strength.label}</span>
+                  </div>
+                  <div className={s.meterRequirements}>
+                    {PW_REQUIREMENTS.map((r) => {
+                      const met = r.test(password);
+                      return (
+                        <span
+                          key={r.id}
+                          className={`${s.meterReq} ${met ? s.meterReqMet : ""}`}
+                        >
+                          {met ? <Check size={11} strokeWidth={3} /> : <X size={11} />}
+                          {r.label}
+                        </span>
+                      );
+                    })}
+                  </div>
                 </div>
-              </>
+              )}
+
+              {passwordError && (
+                <span className={`${s.inlineMsg} ${s.inlineMsgError}`}>
+                  <AlertCircle size={12} /> {passwordError}
+                </span>
+              )}
+            </Field>
+
+            {error && (
+              <div className={s.errorBox} role="alert">
+                <AlertCircle size={14} /> {error}
+              </div>
             )}
-          </div>
 
-          {error && <div className={s.error}>{error}</div>}
-
-          <div className={s.navRow}>
-            <Button variant="ghost" onClick={back} disabled={step === 1 || isLoading}>
-              <ChevronLeft size={16} /> Back
+            <Button
+              type="submit"
+              variant="primary"
+              size="lg"
+              disabled={loading || !formValid}
+            >
+              {loading ? (
+                <>
+                  <Loader2 size={16} className="spin" /> Creating account…
+                </>
+              ) : (
+                "Create account"
+              )}
             </Button>
-            {step < 3 ? (
-              <Button onClick={next}>Continue <ChevronRight size={16} /></Button>
-            ) : (
-              <Button onClick={finish} disabled={isLoading}>
-                {isLoading ? "Creating account..." : "Finish & enter"} {isLoading ? null : <Check size={16} />}
-              </Button>
-            )}
-          </div>
+          </form>
 
-          <div className={s.foot}>
-            Already have an account? <Link to="/login">Sign in</Link>
+          <div className={s.formFooter}>
+            Already have an account?{" "}
+            <Link to="/login" className={s.link}>
+              Sign in
+            </Link>
           </div>
         </div>
       </div>
     </div>
   );
-} 
+}

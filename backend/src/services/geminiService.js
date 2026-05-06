@@ -1,64 +1,52 @@
 // backend/src/services/geminiService.js
-//
-// Thin wrapper around @google/generative-ai with:
-//   - configurable model (default gemini-1.5-flash, free-tier friendly)
-//   - JSON-mode helper that *asks* for JSON and validates the response
-//   - retry with exponential backoff on transient errors
-//   - centralized error handling so callers see structured errors
+// Ripped out Google SDK - Now using native fetch with Groq (Llama 3) for stable, free, generous AI!
 
-import { GoogleGenerativeAI } from '@google/generative-ai';
-
-let client = null;
-
-function getClient() {
-  if (!process.env.GEMINI_API_KEY) {
-    throw new Error('GEMINI_API_KEY not set in environment.');
-  }
-  if (!client) {
-    client = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-  }
-  return client;
+export async function generateText(prompt) {
+  return await callAI(prompt, false);
 }
 
-const DEFAULT_MODEL = process.env.GEMINI_MODEL || 'gemini-1.5-flash';
+export async function generateJSON(prompt) {
+  // Force the AI to return raw JSON
+  const strictPrompt = prompt + "\n\nCRITICAL: You MUST respond ONLY with valid JSON. Do not include markdown formatting, code blocks (```json), or any other text. Just the raw JSON object/array.";
 
-/**
- * Generate text from a prompt.
- */
-export async function generateText(prompt, { model = DEFAULT_MODEL, temperature = 0.7 } = {}) {
-  const genModel = getClient().getGenerativeModel({
-    model,
-    generationConfig: { temperature, maxOutputTokens: 2048 },
-  });
-  const result = await withRetry(() => genModel.generateContent(prompt));
-  return result.response.text();
-}
-
-/**
- * Ask Gemini to return JSON. Strips code fences and validates parsability.
- * Throws a structured error if the model returns invalid JSON after retries.
- */
-export async function generateJSON(prompt, { model = DEFAULT_MODEL, temperature = 0.4 } = {}) {
-  const genModel = getClient().getGenerativeModel({
-    model,
-    generationConfig: {
-      temperature,
-      maxOutputTokens: 4096,
-      responseMimeType: 'application/json',
-    },
-  });
-
-  const result = await withRetry(() => genModel.generateContent(prompt));
-  const text = result.response.text();
+  const text = await callAI(strictPrompt, true);
   return parseJSONLoose(text);
 }
 
+async function callAI(prompt, isJson) {
+  const apiKey = process.env.GROQ_API_KEY;
+  if (!apiKey) {
+    throw new Error('GROQ_API_KEY not set in environment. Please add it to your .env file.');
+  }
+
+  // Notice: Just a clean, normal string URL!
+  const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${apiKey}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      model: "llama-3.3-70b-versatile",
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.5,
+      response_format: isJson ? { type: "json_object" } : { type: "text" }
+    })
+  });
+
+  if (!response.ok) {
+    const errText = await response.text();
+    throw new Error(`AI API Error: ${response.status} - ${errText}`);
+  }
+
+  const data = await response.json();
+  return data.choices[0].message.content;
+}
+
 function parseJSONLoose(text) {
-  // First try direct
   try {
     return JSON.parse(text);
   } catch {
-    // Strip markdown fences if model ignored responseMimeType
     const cleaned = text
       .replace(/^```(?:json)?\s*/i, '')
       .replace(/```\s*$/i, '')
@@ -66,27 +54,9 @@ function parseJSONLoose(text) {
     try {
       return JSON.parse(cleaned);
     } catch (err) {
-      const error = new Error('Gemini returned non-JSON response');
+      const error = new Error('AI returned non-JSON response');
       error.cause = { raw: text.slice(0, 500), parseError: err.message };
       throw error;
     }
   }
 }
-
-async function withRetry(fn, { tries = 3, baseDelay = 600 } = {}) {
-  let lastErr;
-  for (let attempt = 0; attempt < tries; attempt++) {
-    try {
-      return await fn();
-    } catch (err) {
-      lastErr = err;
-      // Don't retry on 4xx auth/permission errors
-      const status = err?.response?.status || err?.status;
-      if (status && status >= 400 && status < 500 && status !== 429) break;
-      await sleep(baseDelay * Math.pow(2, attempt));
-    }
-  }
-  throw lastErr;
-}
-
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));

@@ -26,11 +26,10 @@ export function AuthProvider({ children }) {
   }, [user]);
 
   // Connects to POST /api/auth/login
-  const login = async ({ email, password }) => {
-    const { data } = await api.post("/auth/login", { email, password });
-
+  // No longer makes the API call. Just saves the data passed from LoginPage/RegisterPage!
+  const login = (data, token) => {
     // Save the secure token for future requests
-    localStorage.setItem(TOKEN_KEY, data.token);
+    localStorage.setItem(TOKEN_KEY, token);
 
     // Save user data (including their specific role and avatar) to global state
     setUser({

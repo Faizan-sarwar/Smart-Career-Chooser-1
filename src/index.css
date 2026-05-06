@@ -1,49 +1,81 @@
+/* =========================================================================
+   Smart Career Chooser — Design System
+   Palette: Teal + Coral + Cream
+   ========================================================================= */
+
 :root {
-  /* Core Brand */
-  --color-primary: #52a447;
-  --color-primary-dark: #3a7d32;
-  --color-primary-soft: #dcfce7;
+  /* ── PRIMARY: Deep Teal ─────────────────────────────────────────────── */
+  --color-primary: #0d9488; /* teal-600 */
+  --color-primary-dark: #0f766e; /* teal-700 */
+  --color-primary-darker: #115e59; /* teal-800 */
+  --color-primary-light: #14b8a6; /* teal-500 */
+  --color-primary-soft: #ccfbf1; /* teal-100 */
+  --color-primary-faint: #f0fdfa; /* teal-50  */
 
-  /* New Accent: A vibrant Violet to contrast the green for a premium SaaS vibe */
-  --color-accent: #8b5cf6;
-  --color-accent-dark: #6d28d9;
-  --color-accent-soft: #ede9fe;
+  /* ── ACCENT: Warm Coral ─────────────────────────────────────────────── */
+  --color-accent: #f97316; /* orange-500 */
+  --color-accent-dark: #ea580c; /* orange-600 */
+  --color-accent-light: #fb923c; /* orange-400 */
+  --color-accent-soft: #ffedd5; /* orange-100 */
+  --color-accent-faint: #fff7ed; /* orange-50  */
 
-  /* Deep Slate text and pure backgrounds for an ultra-clean look */
-  --color-bg: #f8fafc;
-  --color-surface: #ffffff;
-  --color-text: #0f172a;
-  --color-muted: #64748b;
-  --color-subtle: #cbd5e1;
-  --color-border: #e2e8f0;
+  /* ── NEUTRALS ───────────────────────────────────────────────────────── */
+  --color-bg: #fafaf9; /* warm off-white background */
+  --color-surface: #ffffff; /* card surfaces — pure white for contrast */
+  --color-surface-alt: #fefdfb; /* alternate cream surface */
+  --color-border: #e7e5e4; /* warm gray border */
+  --color-border-strong: #d6d3d1;
+  --color-text: #1c1917; /* stone-900 — softer than black */
+  --color-text-soft: #44403c; /* stone-700 */
+  --color-muted: #78716c; /* stone-500 */
+  --color-muted-light: #a8a29e; /* stone-400 */
 
-  /* Semantic System Colors */
-  --color-danger: #ef4444;
-  --color-warn: #f59e0b;
-  --color-info: #0ea5e9;
+  /* ── SEMANTIC ───────────────────────────────────────────────────────── */
+  --color-success: #16a34a;
+  --color-success-soft: #dcfce7;
+  --color-warning: #eab308;
+  --color-warning-soft: #fef9c3;
+  --color-danger: #dc2626;
+  --color-danger-soft: #fee2e2;
+  --color-info: #0284c7;
+  --color-info-soft: #e0f2fe;
 
-  /* Modern, slightly rounder corners */
-  --radius-sm: 8px;
-  --radius-md: 14px;
-  --radius-lg: 20px;
-
-  /* Ultra-premium Layered Shadows (The true secret to big-website design) */
+  /* ── SHADOWS ────────────────────────────────────────────────────────── */
+  --shadow-xs: 0 1px 2px rgba(28, 25, 23, 0.04);
   --shadow-sm:
-    0 2px 4px rgba(15, 23, 42, 0.02), 0 1px 1px rgba(15, 23, 42, 0.03);
+    0 1px 3px rgba(28, 25, 23, 0.06), 0 1px 2px rgba(28, 25, 23, 0.04);
   --shadow-md:
-    0 10px 24px -8px rgba(15, 23, 42, 0.08),
-    0 4px 8px -4px rgba(15, 23, 42, 0.04);
+    0 4px 12px -2px rgba(28, 25, 23, 0.08),
+    0 2px 6px -2px rgba(28, 25, 23, 0.05);
   --shadow-lg:
-    0 24px 48px -12px rgba(15, 23, 42, 0.15),
-    0 12px 24px -8px rgba(15, 23, 42, 0.06);
-  --shadow-glow: 0 12px 30px -10px rgba(82, 164, 71, 0.5);
+    0 12px 32px -8px rgba(28, 25, 23, 0.12),
+    0 4px 12px -4px rgba(28, 25, 23, 0.06);
+  --shadow-xl: 0 24px 48px -12px rgba(28, 25, 23, 0.18);
+  --shadow-glow: 0 16px 40px -12px rgba(13, 148, 136, 0.45);
+  --shadow-glow-coral: 0 12px 32px -10px rgba(249, 115, 22, 0.5);
 
-  /* Sidebar Configuration */
-  --sidebar-bg: #52a447;
-  --sidebar-fg: #ffffff;
+  /* ── RADII ──────────────────────────────────────────────────────────── */
+  --radius-sm: 8px;
+  --radius: 12px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+  --radius-full: 9999px;
 
-  --font-sans: "Inter", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  /* ── TYPOGRAPHY ─────────────────────────────────────────────────────── */
+  --font-sans:
+    "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-display:
+    "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  /* ── TRANSITIONS ────────────────────────────────────────────────────── */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
+
+/* =========================================================================
+   RESET + BASE
+   ========================================================================= */
 
 *,
 *::before,
@@ -52,100 +84,178 @@
 }
 
 html,
-body,
-#root {
-  height: 100%;
-  margin: 0;
-}
-
 body {
-  font-family: var(--font-sans);
+  margin: 0;
+  padding: 0;
   background: var(--color-bg);
   color: var(--color-text);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.55;
   -webkit-font-smoothing: antialiased;
-  font-size: 14px;
-  line-height: 1.5;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+#root {
+  min-height: 100vh;
 }
 
 a {
-  color: inherit;
+  color: var(--color-primary-dark);
   text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+a:hover {
+  color: var(--color-primary-darker);
 }
 
 button {
   font-family: inherit;
-  cursor: pointer;
 }
 
-:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
-  border-radius: 4px;
-}
+/* =========================================================================
+   TYPOGRAPHY
+   ========================================================================= */
 
 h1,
 h2,
 h3,
-h4 {
+h4,
+h5,
+h6 {
   margin: 0;
+  font-family: var(--font-display);
   color: var(--color-text);
   font-weight: 700;
-  letter-spacing: -0.02em; /* Tighter letter spacing looks more premium */
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+h1 {
+  font-size: 32px;
+  letter-spacing: -0.03em;
+}
+h2 {
+  font-size: 26px;
+}
+h3 {
+  font-size: 20px;
+}
+h4 {
+  font-size: 17px;
 }
 
 p {
   margin: 0;
+  color: var(--color-text-soft);
+  line-height: 1.65;
 }
 
-/* Global animation keyframes */
-@keyframes ccFadeUp {
+code {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 0.92em;
+  background: var(--color-primary-faint);
+  color: var(--color-primary-darker);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+/* =========================================================================
+   SCROLLBAR
+   ========================================================================= */
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border-strong);
+  border-radius: 6px;
+  border: 2px solid var(--color-bg);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-muted-light);
+}
+
+/* =========================================================================
+   FORMS
+   ========================================================================= */
+
+input,
+textarea,
+select {
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 11px 14px;
+  outline: none;
+  transition: all 0.18s var(--ease-out);
+  width: 100%;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--color-muted-light);
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 4px rgba(13, 148, 136, 0.12);
+  background: var(--color-surface);
+}
+
+input:disabled,
+textarea:disabled {
+  background: var(--color-bg);
+  color: var(--color-muted);
+  cursor: not-allowed;
+}
+
+textarea {
+  resize: vertical;
+  min-height: 80px;
+  line-height: 1.55;
+}
+
+/* =========================================================================
+   SELECTION
+   ========================================================================= */
+
+::selection {
+  background: var(--color-primary-soft);
+  color: var(--color-primary-darker);
+}
+
+/* =========================================================================
+   GLOBAL ANIMATIONS  (used across modules via animation-name)
+   ========================================================================= */
+
+@keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(12px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes ccSlideIn {
-  from {
-    opacity: 0;
-    transform: translateX(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes ccPop {
-  0% {
-    transform: scale(0.92);
-    opacity: 0;
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
-@keyframes ccCountUp {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
   }
 }
 
 @keyframes slideUpFade {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(10px);
   }
   to {
     opacity: 1;
@@ -153,36 +263,62 @@ p {
   }
 }
 
-@keyframes ccPulseRing {
-  0% {
-    box-shadow: 0 0 0 0 rgba(82, 164, 71, 0.6);
+@keyframes slideDownFade {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
   }
-  70% {
-    box-shadow: 0 0 0 16px rgba(82, 164, 71, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(82, 164, 71, 0);
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-@keyframes ccShimmer {
+@keyframes ccPop {
   0% {
-    background-position: -400px 0;
+    transform: scale(0.7);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.05);
+    opacity: 1;
   }
   100% {
-    background-position: 400px 0;
+    transform: scale(1);
+  }
+}
+
+@keyframes ccPulseRing {
+  0% {
+    box-shadow: 0 0 0 0 currentColor;
+    opacity: 1;
+  }
+  70% {
+    box-shadow: 0 0 0 10px transparent;
+    opacity: 0.6;
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+    opacity: 1;
   }
 }
 
 @keyframes ccGradientShift {
-  0% {
+  0%,
+  100% {
     background-position: 0% 50%;
   }
   50% {
     background-position: 100% 50%;
   }
+}
+
+@keyframes ccShimmer {
+  0% {
+    background-position: -200% 0;
+  }
   100% {
-    background-position: 0% 50%;
+    background-position: 200% 0;
   }
 }
 
@@ -192,28 +328,50 @@ p {
     transform: translateY(0);
   }
   50% {
-    transform: translateY(-8px);
+    transform: translateY(-6px);
   }
 }
 
-@keyframes ccScrimIn {
-  from {
-    opacity: 0;
-    backdrop-filter: blur(0px);
-  }
+@keyframes ccSpin {
   to {
-    opacity: 1;
-    backdrop-filter: blur(4px);
-  } 
+    transform: rotate(360deg);
+  }
 }
 
-@keyframes ccPanelIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px) scale(0.98);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+/* =========================================================================
+   UTILITY: Skeleton loading shimmer
+   ========================================================================= */
+
+.cc-skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--color-border) 0%,
+    var(--color-bg) 50%,
+    var(--color-border) 100%
+  );
+  background-size: 200% 100%;
+  animation: ccShimmer 1.4s ease-in-out infinite;
+  border-radius: var(--radius-sm);
+}
+
+/* =========================================================================
+   FOCUS-VISIBLE for keyboard accessibility
+   ========================================================================= */
+
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+button:focus-visible {
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.3);
+}
+
+/* =========================================================================
+   UTILITY: spin animation (used by inline loader icons)
+   ========================================================================= */
+
+.spin {
+  animation: ccSpin 0.8s linear infinite;
 }

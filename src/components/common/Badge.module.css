@@ -1,12 +1,59 @@
+/* src/components/common/Badge.module.css */
+
 .badge {
-  display: inline-flex; align-items: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   padding: 3px 10px;
-  border-radius: 999px;
-  font-size: 12px; font-weight: 600;
-  background: var(--color-primary-soft);
-  color: var(--color-primary-dark);
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  line-height: 1.4;
+  border: 1px solid transparent;
+  white-space: nowrap;
 }
-.neutral { background: #f1f5f9; color: #475569; }
-.warn { background: #fef3c7; color: #92400e; }
-.danger { background: #fee2e2; color: #991b1b; }
-.info { background: #e0f2fe; color: #075985; }
+
+.tone_default,
+.tone_neutral {
+  background: var(--color-bg);
+  color: var(--color-text-soft);
+  border-color: var(--color-border);
+}
+
+.tone_primary {
+  background: var(--color-primary-soft);
+  color: var(--color-primary-darker);
+  border-color: rgba(13, 148, 136, 0.2);
+}
+
+.tone_accent {
+  background: var(--color-accent-soft);
+  color: var(--color-accent-dark);
+  border-color: rgba(249, 115, 22, 0.25);
+}
+
+.tone_info {
+  background: var(--color-info-soft);
+  color: #075985;
+  border-color: rgba(2, 132, 199, 0.2);
+}
+
+.tone_success {
+  background: var(--color-success-soft);
+  color: #166534;
+  border-color: rgba(22, 163, 74, 0.2);
+}
+
+.tone_warning {
+  background: var(--color-warning-soft);
+  color: #854d0e;
+  border-color: rgba(234, 179, 8, 0.2);
+}
+
+.tone_danger {
+  background: var(--color-danger-soft);
+  color: #991b1b;
+  border-color: rgba(220, 38, 38, 0.2);
+}

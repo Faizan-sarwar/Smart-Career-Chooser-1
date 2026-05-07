@@ -1,0 +1,399 @@
+/* src/pages/admin/ManageCareers.module.css */
+
+.loadingState,
+.errorState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 40vh;
+  gap: 18px;
+  color: var(--color-muted);
+
+  /* Glassmorphism applied */
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+
+  border-radius: var(--radius-lg);
+  padding: 56px 32px;
+  text-align: center;
+}
+
+.errorState svg {
+  color: var(--color-danger);
+}
+
+.errorState h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.loaderRing {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 4px solid var(--color-primary-soft);
+  border-top-color: var(--color-primary);
+  animation: ccSpin 0.9s linear infinite;
+}
+
+/* =========================================================================
+   TOOLBAR (Filters & Search)
+   ========================================================================= */
+
+.toolbar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.search {
+  flex: 1;
+  min-width: 240px;
+  padding: 10px 14px;
+  /* Fixed: Dynamic background and text colors */
+  background: var(--glass-bg);
+  border: 1.5px solid var(--color-border);
+  color: var(--color-text);
+  border-radius: var(--radius);
+  font-size: 14px;
+  font-family: var(--font-sans);
+  transition: all 0.18s ease;
+}
+
+.search::placeholder {
+  color: var(--color-muted-light);
+}
+
+.search:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
+  background: var(--color-surface);
+}
+
+/* =========================================================================
+   TABLE
+   ========================================================================= */
+
+.tableWrap {
+  overflow: auto;
+  margin-top: 16px;
+  border-radius: var(--radius);
+  border: 1px solid var(--glass-border);
+  max-height: 600px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.table th,
+.table td {
+  padding: 13px 16px;
+  text-align: left;
+  border-bottom: 1px solid var(--glass-border);
+  white-space: nowrap;
+}
+
+.table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  /* Fixed: Glass header with bright text */
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-soft);
+  font-weight: 800;
+}
+
+.table tbody tr {
+  transition: background 0.2s ease;
+}
+
+.table tbody tr:hover {
+  /* Fixed: Subtle glass hover instead of heavy purple */
+  background: var(--glass-bg-hover);
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.muted {
+  color: var(--color-muted);
+  font-variant-numeric: tabular-nums;
+  font-family: var(--font-mono); /* Uses sleek new mono font for salaries */
+}
+
+.emptyRow {
+  text-align: center;
+  padding: 32px;
+  color: var(--color-muted);
+}
+
+.careerCell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.careerIcon {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  background: var(--color-primary-faint);
+  color: var(--color-primary);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.careerTitle {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--color-text);
+}
+
+.careerSlug {
+  font-size: 11px;
+  color: var(--color-muted);
+  font-family: var(--font-mono);
+  margin-top: 2px;
+}
+
+.actions {
+  display: flex;
+  gap: 6px;
+}
+
+.iconBtn {
+  background: var(--glass-bg);
+  border: 1.5px solid var(--color-border);
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  cursor: pointer;
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  font-weight: 500;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.iconBtn:hover:not(:disabled) {
+  background: var(--color-primary-faint);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.iconBtnDanger {
+  color: var(--color-danger);
+  border-color: rgba(220, 38, 38, 0.25);
+}
+
+.iconBtnDanger:hover:not(:disabled) {
+  background: var(--color-danger-soft);
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+
+/* =========================================================================
+   MODAL (Glassmorphic Editor)
+   ========================================================================= */
+
+.scrim {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: grid;
+  place-items: center;
+  z-index: 100;
+  padding: 20px;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modal,
+.smallModal {
+  /* Premium Glass UI for the modal */
+  background: var(--glass-bg);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4);
+  border-radius: var(--radius-xl);
+  position: relative;
+  animation: ccPop 0.3s var(--ease-bounce);
+}
+
+.modal {
+  padding: 32px 32px 24px;
+  width: 100%;
+  max-width: 760px;
+  max-height: 88vh;
+  overflow-y: auto;
+}
+
+.smallModal {
+  padding: 28px;
+  max-width: 440px;
+  width: 100%;
+}
+
+.smallModal h3 {
+  font-size: 18px;
+  margin-bottom: 8px;
+  color: var(--color-text);
+}
+
+.smallModal p {
+  color: var(--color-muted);
+  margin-bottom: 20px;
+  line-height: 1.6;
+  font-size: 14px;
+}
+
+.modalTitle {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--color-text);
+  letter-spacing: -0.02em;
+  margin-bottom: 22px;
+  padding-right: 36px;
+}
+
+.close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: var(--glass-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  color: var(--color-text-soft);
+}
+
+.close:hover {
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+  border-color: var(--color-danger-soft);
+}
+
+.editorBody {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.section {
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  padding: 16px;
+  background: rgba(
+    255,
+    255,
+    255,
+    0.02
+  ); /* Slight contrast to modal background */
+}
+
+.sectionTitle {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-primary);
+  margin: 0 0 12px;
+}
+
+.sectionGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.fieldWide {
+  grid-column: 1 / -1;
+}
+
+.fieldLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.input,
+.textarea {
+  padding: 9px 12px;
+  /* Fixed: Correct background and text for inputs */
+  background: var(--glass-bg);
+  border: 1.5px solid var(--color-border);
+  color: var(--color-text);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  transition: all 0.18s ease;
+  outline: none;
+  width: 100%;
+}
+
+.textarea {
+  resize: vertical;
+  min-height: 70px;
+  line-height: 1.5;
+}
+
+.input:focus,
+.textarea:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
+  background: var(--color-surface);
+}
+
+.input:disabled {
+  background: var(--glass-bg-hover);
+  color: var(--color-muted);
+  cursor: not-allowed;
+}
+
+.modalActions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid var(--glass-border);
+}

@@ -1,24 +1,9 @@
 // src/pages/student/StudentDashboard.jsx
-//
-// Pulls a single aggregated payload from /users/dashboard.
-// Backend assembles latest assessment + active roadmap + notifications
-// into one response, so we get a snappy single-request dashboard.
-
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
-  Target,
-  Award,
-  BookOpen,
-  TrendingUp,
-  Check,
-  Sparkles,
-  ArrowRight,
-  ClipboardCheck,
-  Map,
-  Trophy,
-  Bell,
-  AlertCircle,
+  Target, Award, BookOpen, TrendingUp, Check, Sparkles,
+  ArrowRight, ClipboardCheck, Map, Trophy, Bell, AlertCircle, CircleDashed
 } from "lucide-react";
 import { Page, Grid, TwoCol } from "../../components/common/Page.jsx";
 import StatCard from "../../components/common/StatCard.jsx";
@@ -46,9 +31,7 @@ export default function StudentDashboard() {
       })
       .catch((err) => {
         if (mounted) {
-          setError(
-            err.response?.data?.message || "Could not load your dashboard."
-          );
+          setError(err.response?.data?.message || "Could not load your dashboard.");
         }
       })
       .finally(() => {
@@ -84,23 +67,14 @@ export default function StudentDashboard() {
 
   const firstName = user?.name?.split(" ")[0] || "there";
 
-  // ── Pull from API payload ────────────────────────────────────────
   const {
-    hasAssessment,
-    hasRoadmap,
-    assessmentProgress,
-    hollandCode,
-    topMatch,
-    stats,
-    milestones,
-    milestoneStats,
-    skills,
-    notifications,
+    hasAssessment, hasRoadmap, assessmentProgress, hollandCode,
+    topMatch, stats, milestones, milestoneStats, skills, notifications,
   } = data;
 
   return (
     <Page>
-      {/* ── Hero welcome ─────────────────────────────────────── */}
+      {/* ── Enterprise Glassmorphic Hero ────────────────────────── */}
       <div className={s.welcome}>
         <div className={s.welcomeText}>
           <span className={s.eyebrow}>Student Portal</span>
@@ -116,35 +90,22 @@ export default function StudentDashboard() {
           </p>
           <div className={s.welcomeActions}>
             {!hasAssessment ? (
-              <Link to="/student/assessment">
-                <Button variant="accent" size="lg">
-                  <ClipboardCheck size={16} /> Start assessment
-                </Button>
-              </Link>
+               <Button variant="accent" size="lg" onClick={() => window.location.href='/student/assessment'}>
+                 <ClipboardCheck size={16} /> Start assessment
+               </Button>
             ) : !hasRoadmap ? (
-              <Link to="/student/recommendations">
-                <Button variant="accent" size="lg">
-                  <Sparkles size={16} /> See recommendations
-                </Button>
-              </Link>
+               <Button variant="accent" size="lg" onClick={() => window.location.href='/student/recommendations'}>
+                 <Sparkles size={16} /> See recommendations
+               </Button>
             ) : (
-              <Link to="/student/roadmap">
-                <Button variant="accent" size="lg">
-                  <Map size={16} /> Continue roadmap
-                </Button>
-              </Link>
+               <Button variant="accent" size="lg" onClick={() => window.location.href='/student/roadmap'}>
+                 <Map size={16} /> Continue roadmap
+               </Button>
             )}
           </div>
         </div>
         <div className={s.welcomeRight}>
-          <div className={s.welcomeRingWrap}>
-            <CircularProgress
-              value={assessmentProgress}
-              size={150}
-              stroke={11}
-              label="Profile"
-            />
-          </div>
+          <CircularProgress value={assessmentProgress} size={150} stroke={11} label="Profile" />
         </div>
       </div>
 
@@ -169,11 +130,7 @@ export default function StudentDashboard() {
           value={hasRoadmap ? `${milestoneStats.completed}/${milestoneStats.total}` : "0"}
           delta={hasRoadmap ? `${milestoneStats.pct}% complete` : "No roadmap yet"}
           Icon={BookOpen}
-          spark={
-            hasRoadmap
-              ? [0, 1, 2, milestoneStats.completed, milestoneStats.completed, milestoneStats.completed]
-              : [0, 0, 0, 0, 0, 0]
-          }
+          spark={hasRoadmap ? [0, 1, 2, milestoneStats.completed, milestoneStats.completed] : [0, 0, 0, 0, 0, 0]}
         />
         <StatCard
           label="Profile strength"
@@ -187,7 +144,7 @@ export default function StudentDashboard() {
       {/* ── Two-column main ──────────────────────────────────── */}
       <TwoCol ratio="2:1">
         <Card
-          title={hasRoadmap ? "Your roadmap progress" : "Get started"}
+          title={hasRoadmap ? "Your active roadmap" : "Get started"}
           action={
             hasRoadmap && (
               <Link to="/student/roadmap" className={s.cardLink}>
@@ -198,41 +155,51 @@ export default function StudentDashboard() {
         >
           {!hasAssessment ? (
             <EmptyStep
-              icon={ClipboardCheck}
-              title="Take the career assessment"
-              text="63 research-backed questions covering personality (RIASEC), skills, and interests."
-              cta="Start assessment"
-              link="/student/assessment"
+              icon={ClipboardCheck} title="Take the career assessment"
+              text="63 research-backed questions covering personality, skills, and interests."
+              cta="Start assessment" link="/student/assessment"
             />
           ) : !hasRoadmap ? (
             <EmptyStep
-              icon={Sparkles}
-              title="Generate your skill roadmap"
+              icon={Sparkles} title="Generate your skill roadmap"
               text={`Pick a career like ${topMatch?.title} and get a personalized 12-month learning plan.`}
-              cta="See recommendations"
-              link="/student/recommendations"
+              cta="See recommendations" link="/student/recommendations"
             />
           ) : (
-            <ul className={s.timeline}>
-              {milestones.map((m, i) => (
-                <li key={i} className={s.tlItem}>
-                  <div className={`${s.tlDot} ${m.done ? s.tlDone : ""}`}>
-                    {m.done ? <Check size={14} /> : i + 1}
-                  </div>
-                  <div className={s.tlBody}>
-                    <div className={`${s.tlTitle} ${m.done ? s.tlTitleDone : ""}`}>
-                      {m.title}
-                    </div>
-                    <div className={s.tlMeta}>{m.meta}</div>
-                  </div>
-                  {m.done && (
-                    <span className={s.medal} title="Completed">
-                      <Trophy size={13} />
-                    </span>
-                  )}
-                </li>
-              ))}
-            </ul>
+            <div className={s.roadmapContainer}>
+              <div className={s.roadmapProgressHeader}>
+                <span className={s.roadmapProgressText}>{milestoneStats.pct}% Completed</span>
+                <div className={s.roadmapProgressBar}>
+                  <div className={s.roadmapProgressFill} style={{ width: `${milestoneStats.pct}%` }} />
+                </div>
+              </div>
+              
+              <div className={s.timelineWrap}>
+                <div className={s.timelineLine} />
+                <ul className={s.timeline}>
+                  {/* Slice to only show the next 5 milestones so it doesn't overflow */}
+                  {milestones.slice(0, 5).map((m, i) => (
+                    <li key={i} className={`${s.tlItem} ${m.done ? s.tlDoneRow : ""}`}>
+                      <div className={`${s.tlDot} ${m.done ? s.tlDone : ""}`}>
+                        {m.done ? <Check size={14} /> : <CircleDashed size={14} />}
+                      </div>
+                      <div className={s.tlBody}>
+                        {/* Fallbacks ensure it works with both the old and new AI data structures */}
+                        <div className={`${s.tlTitle} ${m.done ? s.tlTitleDone : ""}`}>
+                          {m.name || m.title}
+                        </div>
+                        <div className={s.tlMeta}>{m.phase || m.meta}</div>
+                      </div>
+                      {m.done && (
+                        <span className={s.medal} title="Completed">
+                          <Trophy size={14} />
+                        </span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
           )}
         </Card>
 
@@ -249,18 +216,12 @@ export default function StudentDashboard() {
 
           <Card
             title="Notifications"
-            action={
-              notifications.length > 0 && (
-                <span className={s.notifBadge}>
-                  <Bell size={11} /> {notifications.length}
-                </span>
-              )
-            }
+            action={notifications.length > 0 && (
+                <span className={s.notifBadge}><Bell size={11} /> {notifications.length}</span>
+            )}
           >
             {notifications.length === 0 ? (
-              <p style={{ color: "var(--color-muted)", fontSize: 13, margin: 0 }}>
-                You're all caught up.
-              </p>
+              <p style={{ color: "var(--color-muted)", fontSize: 13, margin: 0 }}>You're all caught up.</p>
             ) : (
               <div className={s.notes}>
                 {notifications.map((n, i) => (
@@ -277,31 +238,6 @@ export default function StudentDashboard() {
           </Card>
         </div>
       </TwoCol>
-
-      {hasAssessment && topMatch && (
-        <Card
-          title="Your top career match"
-          action={<Badge tone="primary">{stats.match}% match</Badge>}
-        >
-          <div className={s.matchCard}>
-            <div className={s.matchHead}>
-              <h3 className={s.matchTitle}>{topMatch.title}</h3>
-              <div className={s.matchMeta}>
-                {topMatch.cluster && <Badge tone="default">{topMatch.cluster}</Badge>}
-                {topMatch.salary && <span>💰 {topMatch.salary}</span>}
-              </div>
-            </div>
-            {topMatch.reasoning && (
-              <p className={s.matchReason}>{topMatch.reasoning}</p>
-            )}
-            <Link to="/student/recommendations">
-              <Button variant="secondary" size="sm">
-                View full breakdown <ArrowRight size={14} />
-              </Button>
-            </Link>
-          </div>
-        </Card>
-      )}
     </Page>
   );
 }
@@ -309,15 +245,11 @@ export default function StudentDashboard() {
 function EmptyStep({ icon: Icon, title, text, cta, link }) {
   return (
     <div className={s.emptyStep}>
-      <div className={s.emptyStepIcon}>
-        <Icon size={24} />
-      </div>
+      <div className={s.emptyStepIcon}><Icon size={24} /></div>
       <h3 className={s.emptyStepTitle}>{title}</h3>
       <p className={s.emptyStepText}>{text}</p>
       <Link to={link}>
-        <Button variant="accent">
-          {cta} <ArrowRight size={14} />
-        </Button>
+        <Button variant="accent">{cta} <ArrowRight size={14} /></Button>
       </Link>
     </div>
   );

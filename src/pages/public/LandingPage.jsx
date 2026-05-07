@@ -1,122 +1,423 @@
+// src/pages/public/LandingPage.jsx
+
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Sparkles, Compass, ShieldCheck, GraduationCap, ArrowRight, BarChart3, Target, Users } from "lucide-react";
+import {
+  Sparkles,
+  Compass,
+  ShieldCheck,
+  GraduationCap,
+  ArrowRight,
+  BarChart3,
+  Target,
+  Zap,
+  Globe,
+} from "lucide-react";
+
+import AOS from "aos";
+import "aos/dist/aos.css";
 import s from "./LandingPage.module.css";
 
-function useCountUp(target, duration = 1400) {
+function useCountUp(target, duration = 1600) {
   const [n, setN] = useState(0);
+
   useEffect(() => {
-    let raf, start;
+    let start = null;
+
     const step = (t) => {
       if (!start) start = t;
-      const p = Math.min(1, (t - start) / duration);
-      setN(Math.floor(p * target));
-      if (p < 1) raf = requestAnimationFrame(step);
+
+      const progress = Math.min((t - start) / duration, 1);
+
+      setN(Math.floor(progress * target));
+
+      if (progress < 1) {
+        window.requestAnimationFrame(step);
+      }
     };
-    raf = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(raf);
+
+    window.requestAnimationFrame(step);
   }, [target, duration]);
+
   return n;
 }
 
-function Stat({ value, suffix, label }) {
-  const v = useCountUp(value);
-  return (
-    <div className={s.stat}>
-      <div className={s.statValue}>{v.toLocaleString()}{suffix}</div>
-      <div className={s.statLabel}>{label}</div>
-    </div>
-  );
-}
-
 export default function LandingPage() {
+  useEffect(() => {
+    AOS.init({
+      duration: 1000,
+      once: false,
+      mirror: true,
+    });
+  }, []);
+
   return (
     <div className={s.wrap}>
+      {/* ── NAVBAR ── */}
       <header className={s.nav}>
-        <div className={s.brand}>
-          <div className={s.logo}>CC</div> Career Chooser
-        </div>
-        <nav className={s.navLinks}>
-          <a href="#features">Features</a>
-          <a href="#how">How it works</a>
-          <Link to="/login">Sign in</Link>
-          <Link to="/register" className={s.navCta}>Get started <ArrowRight size={14} /></Link>
-        </nav>
-      </header>
-
-      <section className={s.hero}>
-        <div className={s.heroBg} />
-        <div className={s.heroInner}>
-          <span className={s.pill}><Sparkles size={14} /> AI-powered career intelligence</span>
-          <h1 className={s.title}>
-            Discover the career path<br />
-            <span className={s.titleAccent}>that fits who you are.</span>
-          </h1>
-          <p className={s.lead}>
-            Personalized assessments, expert mentors, and real opportunities — all in one
-            beautifully designed platform built for the next generation of professionals.
-          </p>
-          <div className={s.ctaRow}>
-            <Link to="/register" className={s.primaryCta}>Start your career journey <ArrowRight size={16} /></Link>
-            <Link to="/login" className={s.ghostCta}>I already have an account</Link>
+        <div className={s.navInner}>
+          <div className={s.brand}>
+            <div className={s.logo}>CC</div>
+            <span>Career Chooser</span>
           </div>
 
-          <div className={s.statsBar}>
-            <Stat value={12480} label="Active members" />
-            <Stat value={94} suffix="%" label="Match accuracy" />
-            <Stat value={2410} label="Mentors onboarded" />
-            <Stat value={36} suffix="K" label="Career outcomes" />
+          <nav className={s.navLinks}>
+            <a href="#features">Features</a>
+            <a href="#how">Process</a>
+            <a href="#outcomes">Outcomes</a>
+
+            <Link to="/login" className={s.loginLink}>
+              Sign In
+            </Link>
+
+            <Link to="/register" className={s.navCta}>
+              Get Started Free
+            </Link>
+          </nav>
+        </div>
+      </header>
+
+      {/* ── HERO SECTION ── */}
+      <section className={s.hero}>
+        <div className={s.heroBg}>
+          <div className={s.blob1} />
+          <div className={s.blob2} />
+        </div>
+
+        <div className={s.heroContent}>
+          <div className={s.pill} data-aos="fade-down">
+            <Sparkles size={14} />
+            Built with Llama 3.3 Intelligence
+          </div>
+
+          <h1 className={s.title} data-aos="zoom-out-up">
+            Design your future with <br />
+            <span className={s.titleGlow}>
+              AI-Powered Guidance.
+            </span>
+          </h1>
+
+          <p
+            className={s.lead}
+            data-aos="fade-up"
+            data-aos-delay="200"
+          >
+            The only platform in Pakistan combining
+            RIASEC psychometrics with live market data
+            and AI-generated skill roadmaps to launch
+            your dream career.
+          </p>
+
+          <div
+            className={s.ctaRow}
+            data-aos="fade-up"
+            data-aos-delay="400"
+          >
+            <Link
+              to="/register"
+              className={s.primaryCta}
+            >
+              Start Assessment
+              <ArrowRight size={18} />
+            </Link>
+
+            <Link
+              to="/student/market"
+              className={s.secondaryCta}
+            >
+              Explore Market Trends
+            </Link>
+          </div>
+
+          <div
+            className={s.statsGrid}
+            data-aos="fade-up"
+            data-aos-delay="600"
+          >
+            <div className={s.statItem}>
+              <h3>{useCountUp(15000)}+</h3>
+              <p>Active Students</p>
+            </div>
+
+            <div className={s.statItem}>
+              <h3>{useCountUp(96)}%</h3>
+              <p>Match Accuracy</p>
+            </div>
+
+            <div className={s.statItem}>
+              <h3>{useCountUp(500)}+</h3>
+              <p>Expert Mentors</p>
+            </div>
           </div>
         </div>
       </section>
 
+      {/* ── FEATURES ── */}
       <section id="features" className={s.features}>
-        <div className={s.sectionHead}>
-          <h2>Everything you need to choose, plan and grow.</h2>
-          <p>From assessment to first job — guided every step of the way.</p>
+        <div
+          className={s.sectionHead}
+          data-aos="fade-up"
+        >
+          <span className={s.sectionPill}>
+            Capabilities
+          </span>
+
+          <h2>Beyond simple career advice.</h2>
+
+          <p>
+            We use enterprise-grade data to ensure your
+            roadmap is realistic and reachable.
+          </p>
         </div>
+
         <div className={s.featureGrid}>
           {[
-            { Icon: Target, color: "primary", title: "Smart assessments", text: "Multi-dimensional quizzes that uncover your real strengths." },
-            { Icon: BarChart3, color: "accent", title: "Market insights", text: "Live salary trends and demand data for every recommended path." },
-            { Icon: Users, color: "primary", title: "Expert mentors", text: "1:1 sessions with vetted industry mentors who've walked the path." },
-            { Icon: Sparkles, color: "accent", title: "Gamified roadmap", text: "Earn gold badges as you complete milestones on your journey." },
-          ].map((f) => (
-            <div key={f.title} className={s.featureCard}>
-              <div className={`${s.featureIcon} ${f.color === "accent" ? s.iconAccent : ""}`}><f.Icon size={20} /></div>
+            {
+              Icon: Target,
+              title: "RIASEC Profiling",
+              text:
+                "Deep psychological mapping of your core interests and strengths.",
+              delay: 0,
+            },
+            {
+              Icon: BarChart3,
+              title: "Live Market Data",
+              text:
+                "Real-time PKR salary trends and demand metrics from across Pakistan.",
+              delay: 100,
+            },
+            {
+              Icon: Zap,
+              title: "AI Roadmaps",
+              text:
+                "Dynamic, personalized learning paths generated by AI.",
+              delay: 200,
+            },
+            {
+              Icon: Globe,
+              title: "Community Hub",
+              text:
+                "Connect with peers and mentors in a secure ecosystem.",
+              delay: 300,
+            },
+          ].map((f, i) => (
+            <div
+              key={i}
+              className={s.fCard}
+              data-aos="fade-up"
+              data-aos-delay={f.delay}
+            >
+              <div className={s.fIcon}>
+                <f.Icon size={24} />
+              </div>
+
               <h3>{f.title}</h3>
+
               <p>{f.text}</p>
             </div>
           ))}
         </div>
       </section>
 
-      <section id="how" className={s.roles}>
-        <div className={s.sectionHead}>
-          <h2>Built for everyone in the journey.</h2>
-          <p>Three powerful portals, one cohesive platform.</p>
+      {/* ── HOW IT WORKS ── */}
+      <section
+        id="how"
+        className={s.howItWorks}
+      >
+        <div className={s.howContainer}>
+          <div
+            className={s.howText}
+            data-aos="fade-right"
+          >
+            <span className={s.sectionPill}>
+              The Process
+            </span>
+
+            <h2>Three steps to clarity.</h2>
+
+            <div className={s.stepList}>
+              <div className={s.step}>
+                <div className={s.stepNum}>01</div>
+
+                <div>
+                  <h4>Assess</h4>
+
+                  <p>
+                    Complete our research-backed
+                    evaluation.
+                  </p>
+                </div>
+              </div>
+
+              <div className={s.step}>
+                <div className={s.stepNum}>02</div>
+
+                <div>
+                  <h4>Match</h4>
+
+                  <p>
+                    Our AI compares your profile
+                    against career data points.
+                  </p>
+                </div>
+              </div>
+
+              <div className={s.step}>
+                <div className={s.stepNum}>03</div>
+
+                <div>
+                  <h4>Execute</h4>
+
+                  <p>
+                    Follow your customized roadmap
+                    with free Pakistani resources.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div
+            className={s.howVisual}
+            data-aos="zoom-in"
+          >
+            <div className={s.mockupCard}>
+              <div
+                className={s.mockLine}
+                style={{ width: "60%" }}
+              />
+
+              <div
+                className={s.mockLine}
+                style={{ width: "90%" }}
+              />
+
+              <div
+                className={s.mockLine}
+                style={{ width: "40%" }}
+              />
+
+              <div className={s.mockCircle} />
+            </div>
+          </div>
         </div>
+      </section>
+
+      {/* ── ROLE PORTALS ── */}
+      <section className={s.roles}>
+        <div className={s.sectionHead}>
+          <h2>
+            A portal for every stakeholder.
+          </h2>
+        </div>
+
         <div className={s.roleGrid}>
           {[
-            { Icon: GraduationCap, title: "Students", text: "Find your match, plan your skills, connect with mentors.", to: "/register" },
-            { Icon: Compass, title: "Mentors", text: "Manage your roster, run sessions, change lives.", to: "/register" },
-            { Icon: ShieldCheck, title: "Admins", text: "Run analytics, monitor health, scale the platform.", to: "/register" },
-          ].map((r) => (
-            <Link key={r.title} to={r.to} className={s.roleCard}>
-              <div className={s.roleIcon}><r.Icon size={22} /></div>
+            {
+              Icon: GraduationCap,
+              title: "Student Portal",
+              desc:
+                "Your personal AI career coach and learning dashboard.",
+              to: "/register",
+              color: "indigo",
+            },
+            {
+              Icon: Compass,
+              title: "Mentor Portal",
+              desc:
+                "Guide ambitious new talent efficiently.",
+              to: "/register",
+              color: "emerald",
+            },
+            {
+              Icon: ShieldCheck,
+              title: "Admin Portal",
+              desc:
+                "Manage platform data and monitor system health.",
+              to: "/register",
+              color: "amber",
+            },
+          ].map((r, i) => (
+            <div
+              key={i}
+              className={`${s.roleCard} ${s[r.color]}`}
+              data-aos="flip-left"
+              data-aos-delay={i * 150}
+            >
+              <r.Icon size={32} />
+
               <h3>{r.title}</h3>
-              <p>{r.text}</p>
-              <span className={s.roleLink}>Open portal <ArrowRight size={14} /></span>
-            </Link>
+
+              <p>{r.desc}</p>
+
+              <Link
+                to={r.to}
+                className={s.roleLink}
+              >
+                Launch Portal
+                <ArrowRight size={14} />
+              </Link>
+            </div>
           ))}
         </div>
       </section>
 
+      {/* ── FOOTER ── */}
       <footer className={s.footer}>
-        <div>© {new Date().getFullYear()} Career Chooser — built for ambitious humans.</div>
-        <div className={s.footLinks}>
-          <Link to="/login">Sign in</Link>
-          <Link to="/register">Get started</Link>
+        <div className={s.footerMain}>
+          <div className={s.footerBrand}>
+            <div className={s.brand}>
+              <div className={s.logo}>CC</div>
+              <span>Career Chooser</span>
+            </div>
+
+            <p>
+              Empowering the next generation of
+              Pakistan's workforce with data-driven
+              career intelligence.
+            </p>
+          </div>
+
+          <div className={s.footerLinks}>
+            <div>
+              <h5>Platform</h5>
+
+              <a href="#features">Features</a>
+
+              <a href="#how">How it Works</a>
+
+              <Link to="/student/market">
+                Market Trends
+              </Link>
+            </div>
+
+            <div>
+              <h5>Support</h5>
+
+              <Link to="/help">
+                Help Center
+              </Link>
+
+              <Link to="/privacy">
+                Privacy Policy
+              </Link>
+
+              <Link to="/terms">
+                Terms of Service
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        <div className={s.footerBottom}>
+          <p>
+            © {new Date().getFullYear()} Career
+            Chooser Intelligence. All rights reserved.
+          </p>
+
+          <div className={s.madeWith}>
+            Made with 🤍 for the Future
+          </div>
         </div>
       </footer>
     </div>

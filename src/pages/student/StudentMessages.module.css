@@ -37,7 +37,7 @@
 }
 
 /* =========================================================================
-   SIDEBAR (collapses on mobile)
+   SIDEBAR
    ========================================================================= */
 
 .sidebar {
@@ -136,7 +136,6 @@
   margin-top: 2px;
 }
 
-/* Online indicator dot */
 .onlineDot {
   width: 10px;
   height: 10px;
@@ -180,20 +179,17 @@
 }
 
 .chatHead {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 14px 18px;
-  border-bottom: 1px solid var(--color-border);
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(10px);
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px) saturate(180%);
+  -webkit-backdrop-filter: blur(12px) saturate(180%);
+  border-bottom: 1px solid var(--glass-border);
+  padding: 16px 24px;
 }
 
 .headName {
   font-weight: 700;
   font-size: 14px;
 }
-
 .headSub {
   font-size: 12px;
   color: var(--color-muted);
@@ -209,17 +205,7 @@
   gap: 8px;
   overflow-y: auto;
   scroll-behavior: smooth;
-  background:
-    radial-gradient(
-      600px 300px at 100% 0%,
-      rgba(13, 148, 136, 0.05),
-      transparent
-    ),
-    radial-gradient(
-      600px 300px at 0% 100%,
-      rgba(249, 115, 22, 0.05),
-      transparent
-    );
+  background: var(--color-bg);
 }
 
 .empty {
@@ -268,7 +254,7 @@
 }
 
 /* =========================================================================
-   DAY SEPARATORS
+   DAY SEPARATORS & MESSAGE BUBBLES
    ========================================================================= */
 
 .daySep {
@@ -281,7 +267,7 @@
 
 .daySep::before,
 .daySep::after {
-  content: '';
+  content: "";
   flex: 1;
   height: 1px;
   background: var(--color-border);
@@ -298,10 +284,6 @@
   border-radius: var(--radius-full);
   border: 1px solid var(--color-border);
 }
-
-/* =========================================================================
-   MESSAGE BUBBLES
-   ========================================================================= */
 
 .msg {
   max-width: 70%;
@@ -332,7 +314,7 @@
 
 .msgThem {
   align-self: flex-start;
-  background: var(--color-bg);
+  background: var(--color-surface);
   color: var(--color-text);
   border: 1px solid var(--color-border);
   border-bottom-left-radius: 4px;
@@ -341,7 +323,6 @@
 .msgPending {
   opacity: 0.7;
 }
-
 .msgFailed {
   background: var(--color-danger-soft) !important;
   color: var(--color-danger) !important;
@@ -356,7 +337,6 @@
   margin-top: 4px;
   justify-content: flex-end;
 }
-
 .msgThem .msgFoot {
   justify-content: flex-start;
 }
@@ -367,18 +347,15 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Read receipt checkmark — single check = sent, double = read */
 .readMark {
   opacity: 0.55;
   transition: all 0.2s ease;
 }
-
 .readMarkSeen {
   opacity: 1;
-  color: #5eead4; /* light teal — pops on the dark bubble */
+  color: #5eead4;
 }
 
-/* Inline retry for failed messages */
 .retryBtn {
   background: rgba(220, 38, 38, 0.1);
   border: 1px solid rgba(220, 38, 38, 0.3);
@@ -394,19 +371,13 @@
   transition: all 0.15s ease;
   font-family: inherit;
 }
-
 .retryBtn:hover:not(:disabled) {
   background: var(--color-danger);
   color: white;
 }
-
 .retryBtn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
-}
-
-.spin {
-  animation: ccSpin 0.8s linear infinite;
 }
 
 /* =========================================================================
@@ -417,9 +388,10 @@
   display: flex;
   gap: 8px;
   padding: 14px;
-  border-top: 1px solid var(--color-border);
-  background: rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(10px);
+  border-top: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
   align-items: flex-end;
 }
 
@@ -433,7 +405,9 @@
   background: var(--color-surface);
   font-family: inherit;
   color: var(--color-text);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
   resize: none;
   line-height: 1.45;
   min-height: 44px;
@@ -449,7 +423,6 @@
 .composer textarea::placeholder {
   color: var(--color-muted-light);
 }
-
 .composer textarea:disabled {
   background: var(--color-bg);
   cursor: not-allowed;
@@ -478,11 +451,9 @@
   transform: translateY(-1px);
   box-shadow: 0 6px 14px -3px rgba(13, 148, 136, 0.5);
 }
-
 .sendBtn:active:not(:disabled) {
   transform: scale(0.96);
 }
-
 .sendBtn:disabled {
   opacity: 0.4;
   cursor: not-allowed;

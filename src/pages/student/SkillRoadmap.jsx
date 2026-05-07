@@ -32,6 +32,12 @@ export default function SkillRoadmap() {
   const [openMilestone, setOpenMilestone] = useState(null);
   const [togglingId, setTogglingId] = useState(null);
 
+  // ── AI Verification States ──
+  const [verifyOpen, setVerifyOpen] = useState(false);
+  const [verifyText, setVerifyText] = useState("");
+  const [verifyLoading, setVerifyLoading] = useState(false);
+  const [verifyResult, setVerifyResult] = useState(null);
+
   useEffect(() => {
     let mounted = true;
     api
@@ -44,7 +50,8 @@ export default function SkillRoadmap() {
     };
   }, []);
 
-  const handleToggle = async (milestone) => {
+  // Modifies the database and local state
+  const toggleDatabaseStatus = async (milestone) => {
     setTogglingId(milestone._id);
     try {
       await api.patch(
@@ -66,6 +73,47 @@ export default function SkillRoadmap() {
       console.error(err);
     } finally {
       setTogglingId(null);
+    }
+  };
+
+  // Triggers either a direct uncheck, or opens the AI Quiz
+  const initiateVerification = (milestone) => {
+    if (milestone.done) {
+      // Allow them to uncheck it easily
+      toggleDatabaseStatus(milestone); 
+    } else {
+      // Force the AI Quiz to mark as complete!
+      setVerifyResult(null);
+      setVerifyText("");
+      setVerifyOpen(true);
+    }
+  };
+
+  // Submits the quiz to Groq
+  const submitVerification = async () => {
+    if (!verifyText.trim()) return;
+    setVerifyLoading(true);
+    try {
+      const { data } = await api.post("/roadmap/verify", {
+        milestoneName: openMilestone.name,
+        studentAnswer: verifyText
+      });
+      
+      setVerifyResult(data);
+
+      if (data.passed) {
+        // AI approved! Update the UI and Database
+        toggleDatabaseStatus(openMilestone);
+        setTimeout(() => {
+          setVerifyOpen(false);
+          setVerifyResult(null);
+          setVerifyText("");
+        }, 2500); // Close modal 2.5s after showing success message
+      }
+    } catch (err) {
+      console.error("Verification failed", err);
+    } finally {
+      setVerifyLoading(false);
     }
   };
 
@@ -173,10 +221,11 @@ export default function SkillRoadmap() {
                   className={`${s.node} ${node.done ? s.nodeDone : ""}`}
                   style={{ animationDelay: `${(gIdx * 4 + i) * 0.05}s` }}
                 >
+                  {/* Inline complete button now triggers AI check */}
                   <button
                     type="button"
                     className={s.bullet}
-                    onClick={() => handleToggle(node)}
+                    onClick={() => initiateVerification(node)}
                     disabled={togglingId === node._id}
                     aria-label={node.done ? "Mark incomplete" : "Mark complete"}
                   >
@@ -217,7 +266,8 @@ export default function SkillRoadmap() {
         );
       })}
 
-      {openMilestone && (
+      {/* ── STANDARD MILESTONE MODAL ── */}
+      {openMilestone && !verifyOpen && (
         <div className={s.scrim} onClick={() => setOpenMilestone(null)}>
           <div className={s.modal} onClick={(e) => e.stopPropagation()}>
             <button
@@ -294,7 +344,7 @@ export default function SkillRoadmap() {
                 Close
               </Button>
               <Button
-                onClick={() => handleToggle(openMilestone)}
+                onClick={() => initiateVerification(openMilestone)}
                 disabled={togglingId === openMilestone._id}
                 variant={openMilestone.done ? "ghost" : "accent"}
               >
@@ -308,6 +358,68 @@ export default function SkillRoadmap() {
                   </>
                 )}
               </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── AI KNOWLEDGE VERIFICATION MODAL ── */}
+      {verifyOpen && openMilestone && (
+        <div className={s.scrim} onClick={() => !verifyLoading && setVerifyOpen(false)}>
+          <div className={s.modal} onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px', zIndex: 100 }}>
+            <div className={s.modalHead}>
+              <div className={s.modalIcon} style={{ background: 'rgba(99, 102, 241, 0.2)', color: 'var(--color-primary)' }}>
+                <Sparkles size={20} />
+              </div>
+              <div>
+                <h2>Knowledge Check</h2>
+                <p>AI Verification required to unlock this milestone.</p>
+              </div>
+            </div>
+
+            <div style={{ padding: '0 24px 24px' }}>
+              <p style={{ color: 'var(--color-text)', fontSize: '15px', marginBottom: '16px', lineHeight: '1.5' }}>
+                Briefly explain the core concept of <strong>{openMilestone.name}</strong> in your own words. What did you learn?
+              </p>
+              
+              <textarea 
+                value={verifyText}
+                onChange={(e) => setVerifyText(e.target.value)}
+                placeholder="I learned that..."
+                disabled={verifyLoading || verifyResult?.passed}
+                style={{
+                  width: '100%', minHeight: '110px', padding: '14px',
+                  background: 'rgba(24, 24, 27, 0.4)', border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: '10px', color: 'white', resize: 'vertical',
+                  fontSize: '14px', fontFamily: 'inherit', outline: 'none'
+                }}
+              />
+
+              {verifyResult && (
+                <div style={{
+                  marginTop: '16px', padding: '12px 16px', borderRadius: '8px', fontSize: '14px',
+                  background: verifyResult.passed ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                  color: verifyResult.passed ? '#34d399' : '#f87171',
+                  border: `1px solid ${verifyResult.passed ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`,
+                  display: 'flex', alignItems: 'center', gap: '8px'
+                }}>
+                  {verifyResult.passed ? <Check size={16} /> : <X size={16} />} 
+                  <span>{verifyResult.feedback}</span>
+                </div>
+              )}
+
+              <div className={s.modalActions} style={{ marginTop: '24px' }}>
+                <Button variant="secondary" onClick={() => { setVerifyOpen(false); setVerifyResult(null); }}>
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={submitVerification} 
+                  disabled={verifyLoading || !verifyText.trim() || verifyResult?.passed}
+                  variant="accent"
+                >
+                  {verifyLoading ? "Verifying..." : "Submit to AI Coach"}
+                </Button>
+              </div>
             </div>
           </div>
         </div>

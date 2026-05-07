@@ -1,5 +1,9 @@
 /* src/pages/student/MarketInsights.module.css */
 
+/* =========================================================================
+   STATES (Glassmorphic)
+   ========================================================================= */
+
 .loadingState,
 .errorState {
   display: flex;
@@ -8,9 +12,15 @@
   justify-content: center;
   min-height: 40vh;
   gap: 16px;
-  color: var(--color-muted);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  color: var(--color-text);
+
+  /* Glassmorphism */
+  background: rgba(24, 24, 27, 0.4);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+
   border-radius: var(--radius-lg);
   padding: 56px 32px;
   text-align: center;
@@ -29,51 +39,47 @@
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  border: 4px solid var(--color-primary-soft);
+  border: 4px solid rgba(99, 102, 241, 0.2);
   border-top-color: var(--color-primary);
   animation: ccSpin 0.9s linear infinite;
 }
 
 /* =========================================================================
-   TICKER
+   TICKER (Glowing Glass with Masking)
    ========================================================================= */
 
 .tickerWrap {
+  /* Glowing glass background instead of solid gradient */
   background: linear-gradient(
-    90deg,
-    var(--color-primary) 0%,
-    var(--color-primary-dark) 50%,
-    var(--color-accent) 100%
+    135deg,
+    rgba(99, 102, 241, 0.1) 0%,
+    rgba(56, 189, 248, 0.05) 100%
   );
-  background-size: 200% 200%;
-  animation: ccGradientShift 10s ease infinite;
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  box-shadow: inset 0 0 20px rgba(99, 102, 241, 0.05);
+
   border-radius: var(--radius-md);
   padding: 14px 0;
   overflow: hidden;
-  color: white;
-  box-shadow: var(--shadow-glow);
+  color: var(--color-text);
   position: relative;
-}
 
-.tickerWrap::before,
-.tickerWrap::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 60px;
-  z-index: 1;
-  pointer-events: none;
-}
-
-.tickerWrap::before {
-  left: 0;
-  background: linear-gradient(90deg, var(--color-primary) 0%, transparent 100%);
-}
-
-.tickerWrap::after {
-  right: 0;
-  background: linear-gradient(270deg, var(--color-accent) 0%, transparent 100%);
+  /* Smooth fade out on the left and right edges using a mask */
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent,
+    black 10%,
+    black 90%,
+    transparent
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    black 10%,
+    black 90%,
+    transparent
+  );
 }
 
 .tickerInner {
@@ -86,6 +92,9 @@
 .tickerItem {
   font-weight: 600;
   font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 @keyframes tickerScroll {
@@ -114,7 +123,7 @@
 }
 
 /* =========================================================================
-   TRENDING CAREERS
+   TRENDING CAREERS (Glassmorphic Cards)
    ========================================================================= */
 
 .trendList {
@@ -128,20 +137,24 @@
   align-items: center;
   gap: 14px;
   padding: 14px 16px;
-  border-radius: var(--radius);
-  background: var(--color-bg);
-  border-left: 4px solid;
-  border-top: 1px solid var(--color-border);
-  border-right: 1px solid var(--color-border);
-  border-bottom: 1px solid var(--color-border);
-  opacity: 0;
-  animation: slideUpFade 0.4s var(--ease-out) forwards;
-  transition: all 0.25s var(--ease-out);
-}
+  border-radius: var(--radius-md);
 
+  /* Glass Background */
+  background: rgba(24, 24, 27, 0.3);
+  backdrop-filter: blur(8px);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-left: 4px solid;
+
+  /* FIX: Removed opacity: 0 and animation to ensure they ALWAYS show */
+  transition: all 0.25s ease-out;
+}
 .trendCard:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.15);
   transform: translateX(4px);
-  box-shadow: var(--shadow-md);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .trendPulse {
@@ -163,4 +176,35 @@
   color: var(--color-muted);
   margin-top: 2px;
   font-weight: 500;
+}
+
+/* =========================================================================
+   🚨 CHART OVERRIDES (Fixes the blinding white tooltips) 🚨
+   ========================================================================= */
+
+/* Targets Recharts/Chart.js default tooltips and forces them into Dark Glass */
+:global(.recharts-default-tooltip) {
+  background-color: rgba(24, 24, 27, 0.8) !important;
+  backdrop-filter: blur(16px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: var(--radius-md) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
+  padding: 12px 16px !important;
+}
+
+:global(.recharts-tooltip-item) {
+  padding-top: 4px !important;
+  padding-bottom: 4px !important;
+  font-family: var(--font-sans) !important;
+  font-weight: 500 !important;
+}
+
+:global(.recharts-tooltip-label) {
+  color: var(--color-text) !important;
+  font-family: var(--font-display) !important;
+  font-weight: 700 !important;
+  margin-bottom: 8px !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 4px;
 }

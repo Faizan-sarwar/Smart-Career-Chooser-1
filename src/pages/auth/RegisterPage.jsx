@@ -141,17 +141,12 @@ export default function RegisterPage() {
         ...(role === "Mentor" && { university: expertise.trim() }),
       };
 
-      const { data } = await api.post("/auth/register", payload);
+      // 1. Create the account in the database
+      await api.post("/auth/register", payload);
 
-      if (login) {
-        login(data, data.token);
-      } else {
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("user", JSON.stringify(data));
-      }
+      // 2. Redirect straight to the login page so they have to log in manually!
+      navigate("/login", { replace: true });
 
-      const r = (data.role || "student").toLowerCase();
-      navigate(`/${r}/dashboard`, { replace: true });
     } catch (err) {
       const msg = err.response?.data?.message;
       if (msg?.toLowerCase().includes("already exists")) {

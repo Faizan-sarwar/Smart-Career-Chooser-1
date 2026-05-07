@@ -1,28 +1,3 @@
-// backend/src/controllers/adminController.js
-//
-// All admin-only endpoints. Each is `protect + authorize('Admin')`.
-//
-// Endpoints:
-//   GET    /api/admin/stats              — dashboard aggregator
-//   GET    /api/admin/users              — paginated user list (real DB)
-//   PUT    /api/admin/users/:id/status   — toggle active/disabled
-//   PATCH  /api/admin/users/:id/role     — change role
-//   DELETE /api/admin/users/:id          — delete user
-//   GET    /api/admin/market             — current market snapshot
-//   PUT    /api/admin/market             — update market data
-//   GET    /api/admin/careers            — list all careers (with filters)
-//   POST   /api/admin/careers            — create career
-//   PUT    /api/admin/careers/:id        — update career
-//   DELETE /api/admin/careers/:id        — soft-delete (isActive=false)
-//   GET    /api/admin/events             — list all events
-//   POST   /api/admin/events             — create event
-//   PUT    /api/admin/events/:id         — update event
-//   DELETE /api/admin/events/:id         — delete event
-//   GET    /api/admin/reports            — moderation queue
-//   POST   /api/admin/reports/:id/resolve — resolve a report (remove or ignore)
-//   POST   /api/admin/reports            — student endpoint to file a report
-//                                          (mounted on /community routes too)
-
 import User from '../models/User.js';
 import Career from '../models/Career.js';
 import Event from '../models/Event.js';
@@ -31,6 +6,7 @@ import Post from '../models/Post.js';
 import Report from '../models/Report.js';
 import AssessmentResult from '../models/AssessmentResult.js';
 import Roadmap from '../models/Roadmap.js';
+import Groq from "groq-sdk"; // 🚨 IMPORTED GROQ HERE
 
 // ════════════════════════════════════════════════════════════════
 // DASHBOARD
@@ -38,18 +14,10 @@ import Roadmap from '../models/Roadmap.js';
 
 export const getStats = async (req, res, next) => {
   try {
-    // All counts in parallel
     const [
-      totalUsers,
-      students,
-      mentors,
-      admins,
-      totalCareers,
-      totalEvents,
-      totalPosts,
-      totalAssessments,
-      totalRoadmaps,
-      pendingReports,
+      totalUsers, students, mentors, admins,
+      totalCareers, totalEvents, totalPosts, totalAssessments,
+      totalRoadmaps, pendingReports,
     ] = await Promise.all([
       User.countDocuments({}),
       User.countDocuments({ role: 'Student' }),
@@ -63,24 +31,14 @@ export const getStats = async (req, res, next) => {
       Report.countDocuments({ status: 'pending' }),
     ]);
 
-    // User growth — last 6 months
     const growth = await monthlyGrowth();
-
-    // Weekly engagement — count distinct active users per day for last 7 days
     const engagement = await weeklyEngagement();
 
     res.json({
       totals: {
-        users: totalUsers,
-        students,
-        mentors,
-        admins,
-        careers: totalCareers,
-        events: totalEvents,
-        posts: totalPosts,
-        assessments: totalAssessments,
-        roadmaps: totalRoadmaps,
-        pendingReports,
+        users: totalUsers, students, mentors, admins,
+        careers: totalCareers, events: totalEvents, posts: totalPosts,
+        assessments: totalAssessments, roadmaps: totalRoadmaps, pendingReports,
       },
       growth,
       engagement,
@@ -96,7 +54,6 @@ export const getStats = async (req, res, next) => {
 };
 
 async function monthlyGrowth() {
-  // Count users created in each of the last 6 months
   const now = new Date();
   const months = [];
   for (let i = 5; i >= 0; i--) {
@@ -111,7 +68,6 @@ async function monthlyGrowth() {
     )
   );
 
-  // Cumulative running total
   let running = await User.countDocuments({ createdAt: { $lt: months[0].start } });
   return months.map((m, i) => {
     running += counts[i];
@@ -120,8 +76,6 @@ async function monthlyGrowth() {
 }
 
 async function weeklyEngagement() {
-  // Use AssessmentResult + Roadmap completion + new posts as proxy for "sessions"
-  // Get count of activity in each of the last 7 days
   const days = [];
   const now = new Date();
   for (let i = 6; i >= 0; i--) {
@@ -159,12 +113,8 @@ export const listUsers = async (req, res, next) => {
 
     res.json(
       users.map((u) => ({
-        id: u._id,
-        name: u.name,
-        email: u.email,
-        role: u.role,
-        status: u.status || 'active',
-        avatar: u.avatar,
+        id: u._id, name: u.name, email: u.email, role: u.role,
+        status: u.status || 'active', avatar: u.avatar,
         university: u.university || null,
         joined: new Date(u.createdAt).toISOString().split('T')[0],
       }))
@@ -177,24 +127,16 @@ export const listUsers = async (req, res, next) => {
 export const toggleUserStatus = async (req, res, next) => {
   try {
     const user = await User.findById(req.params.id);
-    if (!user) {
-      res.status(404);
-      throw new Error('User not found');
-    }
+    if (!user) throw new Error('User not found');
 
-    // Don't let an admin disable themselves
     if (user._id.toString() === req.user._id.toString()) {
-      res.status(400);
-      throw new Error("You can't disable your own account");
+      res.status(400); throw new Error("You can't disable your own account");
     }
 
     user.status = user.status === 'active' ? 'disabled' : 'active';
     await user.save();
 
-    res.json({
-      id: user._id,
-      status: user.status,
-    });
+    res.json({ id: user._id, status: user.status });
   } catch (err) {
     next(err);
   }
@@ -205,15 +147,11 @@ export const updateUserRole = async (req, res, next) => {
     const { role } = req.body;
     const validRoles = ['Student', 'Mentor', 'Admin', 'President'];
     if (!validRoles.includes(role)) {
-      res.status(400);
-      throw new Error('Invalid role');
+      res.status(400); throw new Error('Invalid role');
     }
 
     const user = await User.findById(req.params.id);
-    if (!user) {
-      res.status(404);
-      throw new Error('User not found');
-    }
+    if (!user) { res.status(404); throw new Error('User not found'); }
 
     user.role = role;
     await user.save();
@@ -226,17 +164,12 @@ export const updateUserRole = async (req, res, next) => {
 export const deleteUser = async (req, res, next) => {
   try {
     const user = await User.findById(req.params.id);
-    if (!user) {
-      res.status(404);
-      throw new Error('User not found');
-    }
+    if (!user) { res.status(404); throw new Error('User not found'); }
 
     if (user._id.toString() === req.user._id.toString()) {
-      res.status(400);
-      throw new Error("You can't delete your own account");
+      res.status(400); throw new Error("You can't delete your own account");
     }
 
-    // Cascade — clean up user's data
     await Promise.all([
       AssessmentResult.deleteMany({ user: user._id }),
       Roadmap.deleteMany({ user: user._id }),
@@ -253,13 +186,56 @@ export const deleteUser = async (req, res, next) => {
 // ════════════════════════════════════════════════════════════════
 // MARKET DATA
 // ════════════════════════════════════════════════════════════════
+// 🚨 NEW AI MARKET DATA GENERATOR 🚨
+export const generateMarketData = async (req, res, next) => {
+  try {
+    const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
+    const prompt = `
+      You are an expert labor market analyst for the tech and business sectors in Pakistan.
+      Generate a realistic, highly accurate, and up-to-date market snapshot.
+      
+      Return ONLY a valid JSON object matching this exact structure:
+      {
+        "stats": {
+          "openRoles": "String (e.g., '14.2K' or '8,500')",
+          "avgSalary": "String (e.g., 'PKR 150K' or 'PKR 1.2M')",
+          "remoteShare": "String (e.g., '38%')",
+          "topGrowthField": "String (e.g., 'AI Engineering' or 'Data Science')"
+        },
+        "ticker": [
+          "Generate 3 highly engaging, realistic news headlines about Pakistan's tech or business job market (e.g., 'IT exports cross $3 Billion mark...')"
+        ],
+        "topSkills": [
+          { "skill": "Skill Name", "demand": 95 } // Generate exactly 5 highly-demanded skills with demand scores from 0-100
+        ],
+        "trendingCareers": [
+          { "title": "Career Title", "growth": "String (e.g., '+45%')", "color": "#0891b2" } // Generate exactly 3 careers with distinct hex colors
+        ]
+      }
+    `;
+
+    const chatCompletion = await groq.chat.completions.create({
+      messages: [
+        { role: "system", content: "You output strict JSON only." },
+        { role: "user", content: prompt }
+      ],
+      model: "llama-3.1-8b-instant",
+      response_format: { type: "json_object" },
+      temperature: 0.7,
+    });
+
+    const generatedData = JSON.parse(chatCompletion.choices[0].message.content);
+    res.json(generatedData);
+  } catch (err) {
+    console.error("Market Generation Error:", err);
+    next(err);
+  }
+};
 export const getMarket = async (req, res, next) => {
   try {
     const trend = await MarketTrend.findOne({}).sort({ snapshotDate: -1 }).lean();
-    if (!trend) {
-      return res.json(null);
-    }
+    if (!trend) return res.json(null);
     res.json(trend);
   } catch (err) {
     next(err);
@@ -271,10 +247,7 @@ export const updateMarket = async (req, res, next) => {
     const { stats, ticker, salaryYears, topSkills, trendingCareers } = req.body;
 
     let trend = await MarketTrend.findOne({}).sort({ snapshotDate: -1 });
-
-    if (!trend) {
-      trend = new MarketTrend({});
-    }
+    if (!trend) trend = new MarketTrend({});
 
     if (stats) trend.stats = { ...trend.stats?.toObject?.() || trend.stats, ...stats };
     if (Array.isArray(ticker)) trend.ticker = ticker;
@@ -291,7 +264,7 @@ export const updateMarket = async (req, res, next) => {
 };
 
 // ════════════════════════════════════════════════════════════════
-// CAREERS (CRUD)
+// CAREERS (CRUD + AI)
 // ════════════════════════════════════════════════════════════════
 
 export const listCareers = async (req, res, next) => {
@@ -305,6 +278,52 @@ export const listCareers = async (req, res, next) => {
     const careers = await Career.find(filter).sort({ title: 1 }).lean();
     res.json(careers);
   } catch (err) {
+    next(err);
+  }
+};
+
+// 🚨 NEW AI GENERATOR ROUTE CONTROLLER 🚨
+export const generateCareerData = async (req, res, next) => {
+  try {
+    const { title } = req.body;
+    if (!title) return res.status(400).json({ message: "Career title is required." });
+
+    // Ensure we fetch from .env dynamically
+    const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+
+    const prompt = `
+      You are an expert career counselor and labor market analyst for Pakistan.
+      Provide highly accurate, realistic data for the career: "${title}".
+      
+      Return ONLY a valid JSON object matching this exact structure:
+      {
+        "slug": "url-friendly-slug-of-the-title",
+        "summary": "A 2-3 sentence professional summary of what this role does.",
+        "cluster": "technology", // MUST be one of: technology, business, engineering, health, creative, education, public-service, science, finance, media
+        "demand": "high", // MUST be one of: low, moderate, high, very-high
+        "growthOutlook": "String (e.g., +25% over next 5 years)",
+        "salaryPKR": { "entry": Number, "mid": Number, "senior": Number }, // Realistic monthly salary in PKR
+        "riasecFit": { "R": Number, "I": Number, "A": Number, "S": Number, "E": Number, "C": Number }, // 0 to 10 scale for Realistic, Investigative, Artistic, Social, Enterprising, Conventional
+        "skillWeights": { "technical": Number, "analytical": Number, "creative": Number, "communication": Number, "leadership": Number, "organization": Number }, // 0 to 10 scale
+        "coreSkills": ["Skill 1", "Skill 2", "Skill 3", "Skill 4", "Skill 5"],
+        "educationPaths": ["Path 1", "Path 2"]
+      }
+    `;
+
+    const chatCompletion = await groq.chat.completions.create({
+      messages: [
+        { role: "system", content: "You output strict JSON only." },
+        { role: "user", content: prompt }
+      ],
+      model: "llama-3.1-8b-instant",
+      response_format: { type: "json_object" },
+      temperature: 0.5, // Keeps data factual and consistent
+    });
+
+    const generatedData = JSON.parse(chatCompletion.choices[0].message.content);
+    res.json(generatedData);
+  } catch (err) {
+    console.error("Career Generation Error:", err);
     next(err);
   }
 };
@@ -328,10 +347,7 @@ export const updateCareer = async (req, res, next) => {
       new: true,
       runValidators: true,
     });
-    if (!career) {
-      res.status(404);
-      throw new Error('Career not found');
-    }
+    if (!career) { res.status(404); throw new Error('Career not found'); }
     res.json(career);
   } catch (err) {
     next(err);
@@ -340,16 +356,12 @@ export const updateCareer = async (req, res, next) => {
 
 export const deleteCareer = async (req, res, next) => {
   try {
-    // Soft delete — keep historical data
     const career = await Career.findByIdAndUpdate(
       req.params.id,
       { isActive: false },
       { new: true }
     );
-    if (!career) {
-      res.status(404);
-      throw new Error('Career not found');
-    }
+    if (!career) { res.status(404); throw new Error('Career not found'); }
     res.json({ id: career._id, isActive: false });
   } catch (err) {
     next(err);
@@ -365,16 +377,52 @@ export const listEventsAdmin = async (req, res, next) => {
     const events = await Event.find({}).sort({ when: -1 }).lean({ virtuals: true });
     res.json(
       events.map((e) => ({
-        ...e,
-        id: e._id,
-        attendees: e.rsvps?.length || 0,
+        ...e, id: e._id, attendees: e.rsvps?.length || 0,
       }))
     );
   } catch (err) {
     next(err);
   }
 };
+// 🚨 NEW AI EVENT GENERATOR 🚨
+export const generateEventData = async (req, res, next) => {
+  try {
+    const { topic } = req.body;
+    if (!topic) return res.status(400).json({ message: "Event topic/title is required." });
 
+    const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+
+    const prompt = `
+      You are an expert tech community manager in Pakistan.
+      Generate realistic, highly engaging event details based on this rough topic: "${topic}".
+      
+      Return ONLY a valid JSON object matching this exact structure:
+      {
+        "title": "A catchy, professional title for the event",
+        "description": "A 2-3 sentence engaging description of what attendees will learn and why they should join.",
+        "host": "A realistic Pakistani tech company, university, or community (e.g., Systems Ltd, FAST NUST, Devsinc, Google Developer Group Lahore)",
+        "tag": "Webinar", // MUST be one of: Webinar, Workshop, AMA, Live, Networking
+        "coverColor": "#0d9488" // A hex color code that fits the tech theme
+      }
+    `;
+
+    const chatCompletion = await groq.chat.completions.create({
+      messages: [
+        { role: "system", content: "You output strict JSON only." },
+        { role: "user", content: prompt }
+      ],
+      model: "llama-3.1-8b-instant",
+      response_format: { type: "json_object" },
+      temperature: 0.7,
+    });
+
+    const generatedData = JSON.parse(chatCompletion.choices[0].message.content);
+    res.json(generatedData);
+  } catch (err) {
+    console.error("Event Generation Error:", err);
+    next(err);
+  }
+};
 export const createEvent = async (req, res, next) => {
   try {
     const event = await Event.create(req.body);
@@ -387,13 +435,9 @@ export const createEvent = async (req, res, next) => {
 export const updateEvent = async (req, res, next) => {
   try {
     const event = await Event.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true,
+      new: true, runValidators: true,
     });
-    if (!event) {
-      res.status(404);
-      throw new Error('Event not found');
-    }
+    if (!event) { res.status(404); throw new Error('Event not found'); }
     res.json(event);
   } catch (err) {
     next(err);
@@ -403,10 +447,7 @@ export const updateEvent = async (req, res, next) => {
 export const deleteEvent = async (req, res, next) => {
   try {
     const event = await Event.findByIdAndDelete(req.params.id);
-    if (!event) {
-      res.status(404);
-      throw new Error('Event not found');
-    }
+    if (!event) { res.status(404); throw new Error('Event not found'); }
     res.json({ id: req.params.id, deleted: true });
   } catch (err) {
     next(err);
@@ -425,27 +466,18 @@ export const listReports = async (req, res, next) => {
       .sort({ createdAt: -1 })
       .lean();
 
-    // Hydrate target content where possible
     const enriched = await Promise.all(
       reports.map(async (r) => {
         let target = null;
         if (r.targetType === 'Post') {
-          target = await Post.findById(r.targetId)
-            .populate('author', 'name role')
-            .lean();
+          target = await Post.findById(r.targetId).populate('author', 'name role').lean();
         } else if (r.targetType === 'User') {
           target = await User.findById(r.targetId).select('name email role').lean();
         }
         return {
-          id: r._id,
-          targetType: r.targetType,
-          targetId: r.targetId,
-          target,
-          reportedBy: r.reportedBy,
-          reason: r.reason,
-          notes: r.notes,
-          status: r.status,
-          createdAt: r.createdAt,
+          id: r._id, targetType: r.targetType, targetId: r.targetId,
+          target, reportedBy: r.reportedBy, reason: r.reason,
+          notes: r.notes, status: r.status, createdAt: r.createdAt,
         };
       })
     );
@@ -458,18 +490,12 @@ export const listReports = async (req, res, next) => {
 
 export const resolveReport = async (req, res, next) => {
   try {
-    const { action } = req.body; // 'remove' | 'ignore'
+    const { action } = req.body;
     const report = await Report.findById(req.params.id);
-    if (!report) {
-      res.status(404);
-      throw new Error('Report not found');
-    }
+    if (!report) { res.status(404); throw new Error('Report not found'); }
 
     if (action === 'remove') {
-      // Actually delete the offending content
-      if (report.targetType === 'Post') {
-        await Post.findByIdAndDelete(report.targetId);
-      }
+      if (report.targetType === 'Post') await Post.findByIdAndDelete(report.targetId);
       report.status = 'resolved-removed';
     } else {
       report.status = 'resolved-ignored';
@@ -479,35 +505,85 @@ export const resolveReport = async (req, res, next) => {
     report.resolvedAt = new Date();
     await report.save();
 
-    res.json({
-      id: report._id,
-      status: report.status,
-    });
+    res.json({ id: report._id, status: report.status });
   } catch (err) {
     next(err);
   }
 };
 
-// Endpoint for any logged-in user (not just admin) to file a report.
-// Mounted on /api/community/posts/:id/report
 export const fileReport = async (req, res, next) => {
   try {
     const { targetType, targetId, reason, notes } = req.body;
-
-    if (!targetType || !targetId) {
-      res.status(400);
-      throw new Error('targetType and targetId required');
-    }
+    if (!targetType || !targetId) { res.status(400); throw new Error('targetType and targetId required'); }
 
     const report = await Report.create({
-      targetType,
-      targetId,
-      reportedBy: req.user._id,
-      reason: reason || 'Other',
-      notes: notes || '',
+      targetType, targetId, reportedBy: req.user._id,
+      reason: reason || 'Other', notes: notes || '',
     });
 
     res.status(201).json({ id: report._id });
+  } catch (err) {
+    next(err);
+  }
+};
+// 🚨 NEW AI TRUST & SAFETY ANALYZER 🚨
+export const analyzeContentAI = async (req, res, next) => {
+  try {
+    const { text } = req.body;
+    if (!text) return res.status(400).json({ message: "Content text is required." });
+
+    const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+    const prompt = `
+      You are an expert Trust & Safety moderator for an educational tech platform.
+      Analyze this user-reported content for community guideline violations (spam, harassment, inappropriate content, hate speech, etc.).
+      
+      Content to analyze: "${text}"
+
+      Return ONLY a valid JSON object matching this exact structure:
+      {
+        "riskLevel": "Low", // MUST be "Low", "Medium", or "High"
+        "verdict": "A 1-2 sentence professional explanation of what the text contains and a recommendation on whether to remove or ignore it."
+      }
+    `;
+
+    const chatCompletion = await groq.chat.completions.create({
+      messages: [
+        { role: "system", content: "You output strict JSON only." },
+        { role: "user", content: prompt }
+      ],
+      model: "llama-3.1-8b-instant",
+      response_format: { type: "json_object" },
+      temperature: 0.2, // Low temperature for highly consistent moderation rules
+    });
+
+    const analysis = JSON.parse(chatCompletion.choices[0].message.content);
+    res.json(analysis);
+  } catch (err) {
+    console.error("AI Analysis Error:", err);
+    next(err);
+  }
+};
+// ════════════════════════════════════════════════════════════════
+// ROADMAPS (MONITORING)
+// ════════════════════════════════════════════════════════════════
+
+export const listRoadmapsAdmin = async (req, res, next) => {
+  try {
+    const roadmaps = await Roadmap.find({})
+      .populate('user', 'name email avatar')
+      .sort({ createdAt: -1 })
+      .lean();
+    res.json(roadmaps);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const deleteRoadmapAdmin = async (req, res, next) => {
+  try {
+    const roadmap = await Roadmap.findByIdAndDelete(req.params.id);
+    if (!roadmap) { res.status(404); throw new Error('Roadmap not found'); }
+    res.json({ id: req.params.id, deleted: true });
   } catch (err) {
     next(err);
   }

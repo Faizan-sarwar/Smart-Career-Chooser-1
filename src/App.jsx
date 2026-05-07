@@ -28,8 +28,9 @@ import SettingsPage from "./pages/student/SettingsPage.jsx";
 import NotificationsPage from "./pages/student/NotificationsPage.jsx";
 
 import MentorDashboard from "./pages/mentor/MentorDashboard.jsx";
-import MenteeDetail from "./pages/mentor/MenteeDetail.jsx";
-import CommunicationHub from "./pages/mentor/CommunicationHub.jsx";
+import MyMentees from "./pages/mentor/MyMentees.jsx";
+import MentorSessions from "./pages/mentor/MentorSessions.jsx";
+import MentorInsights from "./pages/mentor/MentorInsights.jsx";
 
 // ADMIN IMPORTS
 import AdminDashboard from "./pages/admin/AdminDashboard.jsx";
@@ -77,11 +78,25 @@ function AnimatedRouter() {
           <Route path="/student/notifications" element={<NotificationsPage />} />
         </Route>
 
-        <Route element={<ProtectedRoute role="mentor"><AppShell /></ProtectedRoute>}>
-          <Route path="/mentor/dashboard" element={<MentorDashboard />} />
-          <Route path="/mentor/mentees/:id" element={<MenteeDetail />} />
-          <Route path="/mentor/hub" element={<CommunicationHub />} />
+        {/* Mentor portal */}
+        <Route
+          path="/mentor"
+          element={
+            <ProtectedRoute role="Mentor">
+              <AppShell />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<Navigate to="/mentor/dashboard" replace />} />
+          <Route path="dashboard" element={<MentorDashboard />} />
+          <Route path="mentees" element={<MyMentees />} />
+          <Route path="mentees/:id" element={<MyMentees />} />
+          <Route path="sessions" element={<MentorSessions />} />
+          <Route path="insights" element={<MentorInsights />} />
+          {/* Keep your existing CommunicationHub component if it exists */}
+          {/* <Route path="hub" element={<CommunicationHub />} /> */}
         </Route>
+
 
         <Route element={<ProtectedRoute role="admin"><AppShell /></ProtectedRoute>}>
           <Route path="/admin/dashboard" element={<AdminDashboard />} />

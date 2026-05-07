@@ -1,5 +1,4 @@
 // src/pages/auth/RegisterPage.jsx
-
 import React, { useState, useMemo, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -8,18 +7,18 @@ import {
 } from "lucide-react";
 import Button from "../../components/common/Button.jsx";
 import { Field, Input } from "../../components/common/Field.jsx";
-import { useAuth } from "../../context/AuthContext.jsx";
 import api from "../../lib/axios.js";
+import AOS from "aos";
+import "aos/dist/aos.css";
 import s from "./Auth.module.css";
 
+// ... Keep your existing ROLES, PAK_UNIVERSITIES, EMAIL_REGEX, and PW_REQUIREMENTS constants here ...
 const ROLES = [
   { value: "Student", label: "Student", Icon: GraduationCap },
   { value: "Mentor", label: "Mentor", Icon: Users },
   { value: "Admin", label: "Admin", Icon: ShieldCheck },
 ];
 
-// Upgraded list with official web domains to fetch real logos!
-// Upgraded list with official web domains to fetch real logos!
 const PAK_UNIVERSITIES = [
   { name: "University of Gujrat", acronym: "UOG", domain: "uog.edu.pk" },
   { name: "National University of Sciences & Technology", acronym: "NUST", domain: "nust.edu.pk" },
@@ -55,7 +54,6 @@ const PW_REQUIREMENTS = [
 
 export default function RegisterPage() {
   const navigate = useNavigate();
-  const { login } = useAuth();
   const fileInputRef = useRef(null);
   const dropdownRef = useRef(null);
 
@@ -68,21 +66,21 @@ export default function RegisterPage() {
   const [expertise, setExpertise] = useState("");
   const [avatar, setAvatar] = useState(null);
 
-  // Custom Dropdown States
   const [uniSearch, setUniSearch] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-
   const [showPassword, setShowPassword] = useState(false);
   const [touched, setTouched] = useState({});
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Close dropdown if clicked outside
+  // Initialize Animations
+  useEffect(() => {
+    AOS.init({ duration: 1000, once: true, easing: "ease-out-cubic" });
+  }, []);
+
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsDropdownOpen(false);
-      }
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) setIsDropdownOpen(false);
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
@@ -115,10 +113,7 @@ export default function RegisterPage() {
       return;
     }
     const reader = new FileReader();
-    reader.onloadend = () => {
-      setAvatar(reader.result);
-      setError("");
-    };
+    reader.onloadend = () => { setAvatar(reader.result); setError(""); };
     reader.readAsDataURL(file);
   };
 
@@ -126,7 +121,6 @@ export default function RegisterPage() {
     e.preventDefault();
     setTouched({ name: true, email: true, password: true, university: true, expertise: true });
     if (!formValid) return;
-
     setLoading(true);
     setError("");
 
@@ -140,13 +134,8 @@ export default function RegisterPage() {
         ...(role === "Student" && { university: university.trim() }),
         ...(role === "Mentor" && { university: expertise.trim() }),
       };
-
-      // 1. Create the account in the database
       await api.post("/auth/register", payload);
-
-      // 2. Redirect straight to the login page so they have to log in manually!
       navigate("/login", { replace: true });
-
     } catch (err) {
       const msg = err.response?.data?.message;
       if (msg?.toLowerCase().includes("already exists")) {
@@ -165,40 +154,42 @@ export default function RegisterPage() {
   const universityError = touched.university && role === "Student" && !universityValid ? "Please select or enter your institution" : "";
   const expertiseError = touched.expertise && role === "Mentor" && !expertiseValid ? "Please enter your area of expertise" : "";
 
-  // Filter universities based on search text
   const filteredUniversities = PAK_UNIVERSITIES.filter(u =>
     (u.name + " " + u.acronym).toLowerCase().includes(uniSearch.toLowerCase())
   );
 
   return (
     <div className={s.shell}>
+      {/* Animated Brand Side */}
       <div className={s.brandSide}>
+        <div className={s.brandBg}>
+          <div className={s.blob1} />
+          <div className={s.blob2} />
+        </div>
         <div className={s.brandInner}>
-          <div className={s.logo}>
+          <div className={s.logo} data-aos="fade-down">
             <GraduationCap size={26} />
           </div>
-          <h1 className={s.brandTitle}>Start your journey</h1>
-          <p className={s.brandSubtitle}>
+          <h1 className={s.brandTitle} data-aos="fade-up" data-aos-delay="100">Start your journey</h1>
+          <p className={s.brandSubtitle} data-aos="fade-up" data-aos-delay="200">
             Join hundreds of Pakistani students discovering their ideal career path
             with science-backed assessments and AI-powered guidance.
           </p>
           <div className={s.featureList}>
-            <div className={s.feature}><Sparkles size={16} /> Science-based RIASEC personality assessment</div>
-            <div className={s.feature}><Sparkles size={16} /> Pakistan-specific career recommendations</div>
-            <div className={s.feature}><Sparkles size={16} /> Free roadmap with local learning resources</div>
+            <div className={s.feature} data-aos="fade-up" data-aos-delay="300"><Sparkles size={16} /> Science-based RIASEC personality assessment</div>
+            <div className={s.feature} data-aos="fade-up" data-aos-delay="400"><Sparkles size={16} /> Pakistan-specific career recommendations</div>
+            <div className={s.feature} data-aos="fade-up" data-aos-delay="500"><Sparkles size={16} /> Free roadmap with local learning resources</div>
           </div>
         </div>
-        <div className={s.brandFooter}>University of Gujrat · Final Year Project 2026</div>
+        <div className={s.brandFooter} data-aos="fade-in" data-aos-delay="600">University of Gujrat · Final Year Project 2026</div>
       </div>
 
       <div className={s.formSide}>
-        <div className={s.formCard} style={{ maxHeight: '90vh', overflowY: 'auto', paddingBottom: '40px' }}>
+        <div className={s.formCard} data-aos="zoom-in-left" data-aos-duration="1200" style={{ maxHeight: '90vh', overflowY: 'auto', paddingBottom: '40px' }}>
           <h2 className={s.formTitle}>Create your account</h2>
           <p className={s.formSubtitle}>Free, takes under a minute. No credit card required.</p>
 
           <form onSubmit={handleSubmit} className={s.form} noValidate>
-
-            {/* AVATAR UPLOAD */}
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '20px' }}>
               <div
                 onClick={() => fileInputRef.current?.click()}
@@ -263,7 +254,6 @@ export default function RegisterPage() {
               {emailError && <span className={`${s.inlineMsg} ${s.inlineMsgError}`}><AlertCircle size={12} /> {emailError}</span>}
             </Field>
 
-            {/* REAL LOGO & TOGGLEABLE UNIVERSITY DROPDOWN */}
             {role === "Student" && (
               <Field label="University / Institution" required>
                 <div className={s.inputGroup} ref={dropdownRef} style={{ position: 'relative' }}>
@@ -295,7 +285,6 @@ export default function RegisterPage() {
                     <ChevronDown size={16} style={{ color: 'var(--color-muted)', transition: 'transform 0.2s', transform: isDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)' }} />
                   </div>
 
-                  {/* Polished Floating Menu */}
                   {isDropdownOpen && (
                     <div style={{
                       position: 'absolute', top: 'calc(100% + 8px)', left: 0, right: 0,
@@ -318,24 +307,17 @@ export default function RegisterPage() {
                           onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-bg)'}
                           onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                         >
-                          {/* REAL LOGO via Google's High-Res Favicon API */}
                           <img
                             src={`https://s2.googleusercontent.com/s2/favicons?domain=${uni.domain}&sz=128`}
                             alt={uni.acronym}
                             onError={(e) => {
-                              // Fallback only if Google literally cannot find the website
                               e.target.onerror = null;
                               e.target.src = `https://ui-avatars.com/api/?name=${uni.acronym}&background=random&color=fff&size=38&rounded=false&font-size=0.35&bold=true`;
                             }}
                             style={{
-                              width: '38px',
-                              height: '38px',
-                              borderRadius: '8px',
-                              flexShrink: 0,
-                              boxShadow: 'var(--shadow-sm)',
-                              objectFit: 'contain',
-                              backgroundColor: '#fff',
-                              padding: '4px' // Added a little more padding so the logos fit nicely
+                              width: '38px', height: '38px', borderRadius: '8px',
+                              flexShrink: 0, boxShadow: 'var(--shadow-sm)', objectFit: 'contain',
+                              backgroundColor: '#fff', padding: '4px'
                             }}
                           />
                           <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
@@ -344,8 +326,6 @@ export default function RegisterPage() {
                           </div>
                         </div>
                       ))}
-
-                      {/* Custom Entry Fallback */}
                       {filteredUniversities.length === 0 && uniSearch.trim() !== "" && (
                         <div
                           onClick={() => {

@@ -2,11 +2,11 @@
 import { AnimatePresence } from "framer-motion";
 import PageTransition from "../common/PageTransition.jsx";
 import React, { useState, useEffect } from "react";
-import { Outlet, NavLink, useNavigate } from "react-router-dom";
+import { Outlet, NavLink, useNavigate, useLocation } from "react-router-dom";
 import {
   LayoutGrid, ClipboardCheck, Sparkles, Map, TrendingUp, Calendar, Users,
   MessageSquare, Search, Bell, LogOut, GraduationCap, UsersRound, ShieldCheck,
-  Menu, X, Briefcase, Settings, User, BookOpen, AlertTriangle, Info, Sun, Moon
+  Menu, X, Briefcase, Settings, User, BookOpen, AlertTriangle, Info, Sun, Moon, CalendarClock, Activity
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext.jsx";
 import api from "../../lib/axios.js";
@@ -25,6 +25,9 @@ const STUDENT_NAV = [
 
 const MENTOR_NAV = [
   { to: "/mentor/dashboard", icon: LayoutGrid, label: "Dashboard" },
+  { to: "/mentor/mentees", icon: UsersRound, label: "My Mentees" },
+  { to: "/mentor/sessions", icon: CalendarClock, label: "Sessions" },
+  { to: "/mentor/insights", icon: Activity, label: "Insights" },
   { to: "/mentor/hub", icon: MessageSquare, label: "Communication Hub" },
 ];
 

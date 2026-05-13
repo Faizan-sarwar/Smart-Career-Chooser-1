@@ -135,7 +135,9 @@ export default function AppShell() {
     navigate("/login");
   };
 
-  const initials = (user?.name || "U").split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase();
+  // 🚨 BULLETPROOF INITIALS GENERATOR 🚨
+  const safeName = (user && user.name && typeof user.name === 'string') ? user.name : "User";
+  const initials = safeName.split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase();
 
   const closeMenus = () => {
     setUserMenuOpen(false);

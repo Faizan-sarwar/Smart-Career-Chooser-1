@@ -47,6 +47,7 @@ const userSchema = new mongoose.Schema(
     expertise: { type: [String], default: [] },
     yearsOfExperience: { type: Number },
     bio: { type: String, maxlength: 1000 },
+    mentorNotes: { type: String, default: '' },
     latestAssessmentResult: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'AssessmentResult',

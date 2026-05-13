@@ -3,7 +3,7 @@ import React, { useState, useMemo, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   GraduationCap, Mail, Lock, User as UserIcon, AlertCircle, Sparkles,
-  Users, ShieldCheck, Eye, EyeOff, Check, X, Loader2, Building2, Camera, ChevronDown
+  Users, ShieldCheck, Eye, EyeOff, Check, X, Loader2, Building2, Camera, ChevronDown, Briefcase
 } from "lucide-react";
 import Button from "../../components/common/Button.jsx";
 import { Field, Input } from "../../components/common/Field.jsx";
@@ -12,7 +12,6 @@ import AOS from "aos";
 import "aos/dist/aos.css";
 import s from "./Auth.module.css";
 
-// ... Keep your existing ROLES, PAK_UNIVERSITIES, EMAIL_REGEX, and PW_REQUIREMENTS constants here ...
 const ROLES = [
   { value: "Student", label: "Student", Icon: GraduationCap },
   { value: "Mentor", label: "Mentor", Icon: Users },
@@ -43,6 +42,25 @@ const PAK_UNIVERSITIES = [
   { name: "Other", acronym: "UNI", domain: "hec.gov.pk" }
 ];
 
+// 🚨 ADDED EXPERTISE DROPDOWN OPTIONS 🚨
+const MENTOR_EXPERTISE = [
+  "Software Engineering",
+  "Frontend Development",
+  "Backend Development",
+  "Full-Stack Development",
+  "Data Science & AI",
+  "Machine Learning",
+  "Product Management",
+  "UI/UX Design",
+  "Cybersecurity",
+  "Cloud Computing (AWS/Azure)",
+  "DevOps & SRE",
+  "Mobile App Development",
+  "Business Analytics",
+  "Digital Marketing",
+  "Entrepreneurship & Startup"
+];
+
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const PW_REQUIREMENTS = [
@@ -55,7 +73,10 @@ const PW_REQUIREMENTS = [
 export default function RegisterPage() {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
+
+  // Refs for the two dropdowns
   const dropdownRef = useRef(null);
+  const expDropdownRef = useRef(null);
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -68,6 +89,10 @@ export default function RegisterPage() {
 
   const [uniSearch, setUniSearch] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  const [expSearch, setExpSearch] = useState("");
+  const [isExpDropdownOpen, setIsExpDropdownOpen] = useState(false);
+
   const [showPassword, setShowPassword] = useState(false);
   const [touched, setTouched] = useState({});
   const [error, setError] = useState("");
@@ -78,9 +103,11 @@ export default function RegisterPage() {
     AOS.init({ duration: 1000, once: true, easing: "ease-out-cubic" });
   }, []);
 
+  // Close dropdowns if clicked outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) setIsDropdownOpen(false);
+      if (expDropdownRef.current && !expDropdownRef.current.contains(event.target)) setIsExpDropdownOpen(false);
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
@@ -132,7 +159,7 @@ export default function RegisterPage() {
         role: role.toLowerCase(),
         avatar: avatar || null,
         ...(role === "Student" && { university: university.trim() }),
-        ...(role === "Mentor" && { university: expertise.trim() }),
+        ...(role === "Mentor" && { expertise: expertise.trim() }), // 🚨 FIXED MENTOR PAYLOAD BUG
       };
       await api.post("/auth/register", payload);
       navigate("/login", { replace: true });
@@ -152,10 +179,14 @@ export default function RegisterPage() {
   const emailError = touched.email && email && !emailValid ? "Enter a valid email address" : "";
   const passwordError = touched.password && password && !passwordValid ? "Password must be at least 6 characters" : "";
   const universityError = touched.university && role === "Student" && !universityValid ? "Please select or enter your institution" : "";
-  const expertiseError = touched.expertise && role === "Mentor" && !expertiseValid ? "Please enter your area of expertise" : "";
+  const expertiseError = touched.expertise && role === "Mentor" && !expertiseValid ? "Please select or enter your area of expertise" : "";
 
   const filteredUniversities = PAK_UNIVERSITIES.filter(u =>
     (u.name + " " + u.acronym).toLowerCase().includes(uniSearch.toLowerCase())
+  );
+
+  const filteredExpertise = MENTOR_EXPERTISE.filter(e =>
+    e.toLowerCase().includes(expSearch.toLowerCase())
   );
 
   return (
@@ -345,17 +376,80 @@ export default function RegisterPage() {
                 {universityError && <span className={`${s.inlineMsg} ${s.inlineMsgError}`}><AlertCircle size={12} /> {universityError}</span>}
               </Field>
             )}
+
+            {/* 🚨 NEW MENTOR EXPERTISE SEARCHABLE DROPDOWN 🚨 */}
             {role === "Mentor" && (
-              <Field label="Area of expertise" hint="e.g. Software Engineering, Product Design" required>
-                <div className={s.inputGroup}>
-                  <Building2 size={16} className={s.inputIcon} />
+              <Field label="Area of expertise" hint="Select your primary domain" required>
+                <div className={s.inputGroup} ref={expDropdownRef} style={{ position: 'relative' }}>
+                  <Briefcase size={16} className={s.inputIcon} />
                   <Input
-                    type="text" placeholder="Software Engineering" value={expertise}
-                    onChange={(e) => setExpertise(e.target.value)}
+                    type="text"
+                    placeholder="Search or select expertise..."
+                    value={isExpDropdownOpen ? expSearch : expertise}
+                    onChange={(e) => {
+                      setExpSearch(e.target.value);
+                      setIsExpDropdownOpen(true);
+                      setExpertise(e.target.value);
+                    }}
+                    onClick={() => {
+                      setIsExpDropdownOpen(!isExpDropdownOpen);
+                      if (!isExpDropdownOpen) setExpSearch(expertise);
+                    }}
                     onBlur={() => setTouched((t) => ({ ...t, expertise: true }))}
                     required
-                    className={touched.expertise && expertiseValid && expertise ? s.inputValid : expertiseError ? s.inputInvalid : ""}
+                    className={touched.expertise && expertiseValid && expertise && !isExpDropdownOpen ? s.inputValid : expertiseError ? s.inputInvalid : ""}
+                    style={{ paddingRight: '36px', cursor: 'pointer' }}
                   />
+                  <div
+                    onClick={() => {
+                      setIsExpDropdownOpen(!isExpDropdownOpen);
+                      if (!isExpDropdownOpen) setExpSearch(expertise);
+                    }}
+                    style={{ position: 'absolute', right: '10px', padding: '4px', display: 'flex', alignItems: 'center', cursor: 'pointer' }}
+                  >
+                    <ChevronDown size={16} style={{ color: 'var(--color-muted)', transition: 'transform 0.2s', transform: isExpDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)' }} />
+                  </div>
+
+                  {isExpDropdownOpen && (
+                    <div style={{
+                      position: 'absolute', top: 'calc(100% + 8px)', left: 0, right: 0,
+                      backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)',
+                      borderRadius: 'var(--radius-md)', padding: '8px 0', maxHeight: '260px',
+                      overflowY: 'auto', zIndex: 9999, boxShadow: 'var(--shadow-xl)'
+                    }}>
+                      {filteredExpertise.map((exp) => (
+                        <div
+                          key={exp}
+                          onClick={() => {
+                            setExpertise(exp);
+                            setExpSearch("");
+                            setIsExpDropdownOpen(false);
+                          }}
+                          style={{
+                            padding: '12px 16px', cursor: 'pointer', fontSize: '14px',
+                            color: 'var(--color-text)', transition: 'background 0.15s ease'
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-bg)'}
+                          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                        >
+                          {exp}
+                        </div>
+                      ))}
+                      {filteredExpertise.length === 0 && expSearch.trim() !== "" && (
+                        <div
+                          onClick={() => {
+                            setExpertise(expSearch);
+                            setIsExpDropdownOpen(false);
+                          }}
+                          style={{ padding: '12px 16px', cursor: 'pointer', color: 'var(--color-primary)', fontWeight: '600', fontSize: '14px' }}
+                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-primary-faint)'}
+                          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                        >
+                          Add custom expertise: "{expSearch}"
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
                 {expertiseError && <span className={`${s.inlineMsg} ${s.inlineMsgError}`}><AlertCircle size={12} /> {expertiseError}</span>}
               </Field>

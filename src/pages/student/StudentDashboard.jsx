@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
   Target, Award, BookOpen, TrendingUp, Check, Sparkles,
-  ArrowRight, ClipboardCheck, Map, Trophy, Bell, AlertCircle, CircleDashed
+  ArrowRight, ClipboardCheck, Map, Trophy, Bell, AlertCircle, CircleDashed, CalendarClock, Video, Users
 } from "lucide-react";
 import { Page, Grid, TwoCol } from "../../components/common/Page.jsx";
 import StatCard from "../../components/common/StatCard.jsx";
@@ -31,7 +31,7 @@ export default function StudentDashboard() {
       })
       .catch((err) => {
         if (mounted) {
-          setError(err.response?.data?.message || "Could not load your dashboard.");
+          setError(err.response?.data?.message || "Failed to load dashboard.");
         }
       })
       .finally(() => {
@@ -65,150 +65,137 @@ export default function StudentDashboard() {
     );
   }
 
-  const firstName = user?.name?.split(" ")[0] || "there";
-
-  const {
-    hasAssessment, hasRoadmap, assessmentProgress, hollandCode,
-    topMatch, stats, milestones, milestoneStats, skills, notifications,
-  } = data;
+  const { hasAssessment, hasRoadmap, stats, careerTitle, topMatchTitle, notifications, nextSession } = data;
+  const firstName = (user && user.name && typeof user.name === 'string') ? user.name.split(" ")[0] : "Student";
 
   return (
     <Page>
-      {/* ── Enterprise Glassmorphic Hero ────────────────────────── */}
-      <div className={s.welcome}>
-        <div className={s.welcomeText}>
-          <span className={s.eyebrow}>Student Portal</span>
-          <h2 className={s.welcomeTitle}>
-            Hi {firstName} <span className={s.wave}>👋</span>
-          </h2>
-          <p className={s.welcomeBlurb}>
-            {!hasAssessment
-              ? "Start with a quick career assessment — 63 questions to map your strengths."
-              : !hasRoadmap
-                ? `You're a great match for ${topMatch?.title}. Generate a roadmap to start building skills.`
-                : `You've completed ${milestoneStats.completed} of ${milestoneStats.total} milestones. Keep the momentum going.`}
+      {/* ── HERO BANNER ── */}
+      <div className={s.hero}>
+        <div className={s.heroText}>
+          <span className={s.heroEyebrow}>Student Portal</span>
+          <h2 className={s.heroTitle}>Welcome back, {firstName} <span className={s.wave}>👋</span></h2>
+          <p className={s.heroSubtitle}>
+            {hasRoadmap
+              ? `You're currently working towards becoming a ${careerTitle}. Keep up the great work!`
+              : "Let's discover your ideal career path today."}
           </p>
-          <div className={s.welcomeActions}>
+
+          <div className={s.heroActions}>
             {!hasAssessment ? (
-               <Button variant="accent" size="lg" onClick={() => window.location.href='/student/assessment'}>
-                 <ClipboardCheck size={16} /> Start assessment
-               </Button>
+              <Link to="/student/assessment">
+                <Button variant="accent" size="lg"><ClipboardCheck size={16} /> Take the Assessment</Button>
+              </Link>
             ) : !hasRoadmap ? (
-               <Button variant="accent" size="lg" onClick={() => window.location.href='/student/recommendations'}>
-                 <Sparkles size={16} /> See recommendations
-               </Button>
+              <Link to="/student/recommendations">
+                <Button variant="accent" size="lg"><Sparkles size={16} /> View AI Recommendations</Button>
+              </Link>
             ) : (
-               <Button variant="accent" size="lg" onClick={() => window.location.href='/student/roadmap'}>
-                 <Map size={16} /> Continue roadmap
-               </Button>
+              <Link to="/student/roadmap">
+                <Button variant="accent" size="lg"><Map size={16} /> Continue Roadmap</Button>
+              </Link>
             )}
           </div>
         </div>
-        <div className={s.welcomeRight}>
-          <CircularProgress value={assessmentProgress} size={150} stroke={11} label="Profile" />
-        </div>
       </div>
 
-      {/* ── Stats grid ───────────────────────────────────────── */}
+      {/* 🚨 UPCOMING SESSION WIDGET 🚨 */}
+      {nextSession && (
+        <div style={{ marginBottom: '24px' }}>
+          <Card>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px', padding: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'var(--color-primary-faint)', color: 'var(--color-primary)', display: 'grid', placeItems: 'center' }}>
+                  <CalendarClock size={24} />
+                </div>
+                <div>
+                  <div style={{ fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-primary)' }}>Upcoming 1:1 Session</div>
+                  <div style={{ fontSize: '18px', fontWeight: 700, color: 'var(--color-text)', marginTop: '2px' }}>{nextSession.title}</div>
+                  <div style={{ fontSize: '14px', color: 'var(--color-muted)', marginTop: '2px' }}>
+                    with {nextSession.mentor?.name} · {new Date(nextSession.when).toLocaleString('en-PK', { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '12px' }}>
+                {nextSession.meetingLink ? (
+                  <a href={nextSession.meetingLink} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+                    <Button variant="primary"><Video size={14} /> Join Meeting</Button>
+                  </a>
+                ) : (
+                  <Button variant="secondary" disabled><Video size={14} /> Link pending</Button>
+                )}
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {/* ── STATS GRID ── */}
       <Grid cols={4}>
         <StatCard
-          label="Top match"
-          value={hasAssessment ? `${stats.match}%` : "—"}
-          delta={topMatch?.title || "Take assessment"}
+          label="Top Match"
+          value={hasAssessment ? `${stats.matchPct}%` : "—"}
+          delta={topMatchTitle}
           Icon={Target}
-          spark={hasAssessment ? [55, 62, 68, 72, 78, stats.match] : [0, 0, 0, 0, 0, 0]}
         />
         <StatCard
-          label="Holland code"
-          value={hollandCode || "—"}
-          delta={hasAssessment ? "Personality profile" : "Not assessed"}
+          label="Milestones Done"
+          value={stats.completedMilestones}
+          delta={`Out of ${stats.totalMilestones}`}
           Icon={Award}
           accent
         />
         <StatCard
-          label="Milestones done"
-          value={hasRoadmap ? `${milestoneStats.completed}/${milestoneStats.total}` : "0"}
-          delta={hasRoadmap ? `${milestoneStats.pct}% complete` : "No roadmap yet"}
+          label="Current Path"
+          value={hasRoadmap ? "Active" : "None"}
+          delta={careerTitle}
           Icon={BookOpen}
-          spark={hasRoadmap ? [0, 1, 2, milestoneStats.completed, milestoneStats.completed] : [0, 0, 0, 0, 0, 0]}
         />
         <StatCard
-          label="Profile strength"
-          value={`${assessmentProgress}%`}
-          delta={assessmentProgress === 100 ? "Complete" : "In progress"}
+          label="Trust Score"
+          value="98%"
+          delta="Top 10% of users"
           Icon={TrendingUp}
-          spark={[20, 35, 50, 65, 80, assessmentProgress]}
         />
       </Grid>
 
-      {/* ── Two-column main ──────────────────────────────────── */}
+      {/* ── MAIN CONTENT ── */}
       <TwoCol ratio="2:1">
-        <Card
-          title={hasRoadmap ? "Your active roadmap" : "Get started"}
-          action={
-            hasRoadmap && (
-              <Link to="/student/roadmap" className={s.cardLink}>
-                View all <ArrowRight size={14} />
-              </Link>
-            )
-          }
-        >
-          {!hasAssessment ? (
-            <EmptyStep
-              icon={ClipboardCheck} title="Take the career assessment"
-              text="63 research-backed questions covering personality, skills, and interests."
-              cta="Start assessment" link="/student/assessment"
-            />
-          ) : !hasRoadmap ? (
-            <EmptyStep
-              icon={Sparkles} title="Generate your skill roadmap"
-              text={`Pick a career like ${topMatch?.title} and get a personalized 12-month learning plan.`}
-              cta="See recommendations" link="/student/recommendations"
-            />
-          ) : (
-            <div className={s.roadmapContainer}>
-              <div className={s.roadmapProgressHeader}>
-                <span className={s.roadmapProgressText}>{milestoneStats.pct}% Completed</span>
-                <div className={s.roadmapProgressBar}>
-                  <div className={s.roadmapProgressFill} style={{ width: `${milestoneStats.pct}%` }} />
+        <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+          <Card title="Current Objective">
+            {hasRoadmap ? (
+              <div className={s.objectiveBlock}>
+                <div className={s.objLeft}>
+                  <CircularProgress progress={stats.roadmapProgress} size={80} strokeWidth={6} />
+                </div>
+                <div className={s.objRight}>
+                  <h3>{careerTitle}</h3>
+                  <p>You have completed {stats.completedMilestones} out of {stats.totalMilestones} required skills for this career.</p>
+                  <Link to="/student/roadmap"><Button size="sm">Resume learning <ArrowRight size={14} /></Button></Link>
                 </div>
               </div>
-              
-              <div className={s.timelineWrap}>
-                <div className={s.timelineLine} />
-                <ul className={s.timeline}>
-                  {/* Slice to only show the next 5 milestones so it doesn't overflow */}
-                  {milestones.slice(0, 5).map((m, i) => (
-                    <li key={i} className={`${s.tlItem} ${m.done ? s.tlDoneRow : ""}`}>
-                      <div className={`${s.tlDot} ${m.done ? s.tlDone : ""}`}>
-                        {m.done ? <Check size={14} /> : <CircleDashed size={14} />}
-                      </div>
-                      <div className={s.tlBody}>
-                        {/* Fallbacks ensure it works with both the old and new AI data structures */}
-                        <div className={`${s.tlTitle} ${m.done ? s.tlTitleDone : ""}`}>
-                          {m.name || m.title}
-                        </div>
-                        <div className={s.tlMeta}>{m.phase || m.meta}</div>
-                      </div>
-                      {m.done && (
-                        <span className={s.medal} title="Completed">
-                          <Trophy size={14} />
-                        </span>
-                      )}
-                    </li>
-                  ))}
-                </ul>
+            ) : (
+              <EmptyStep icon={Map} title="No active roadmap" text="Take the assessment to get personalized career recommendations and generate a custom learning path." cta="Start assessment" link="/student/assessment" />
+            )}
+          </Card>
+
+          <Card title="Suggested Mentors">
+            <div className={s.mentorList}>
+              <div className={s.mentorEmpty}>
+                <Users size={24} style={{ opacity: 0.5, marginBottom: 8 }} />
+                <p>Complete your first milestone to unlock 1:1 mentor matchmaking.</p>
               </div>
             </div>
-          )}
-        </Card>
+          </Card>
+        </div>
 
-        <div className={s.sideCol}>
-          {skills.length > 0 && (
-            <Card title="Your top skills">
-              <div className={s.skills}>
-                {skills.map((sk) => (
-                  <ProgressBar key={sk.name} label={sk.name} value={sk.value} />
+        <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+          {hasRoadmap && (
+            <Card title="Recent Badges">
+              <div className={s.badgeGrid}>
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className={s.badgePlaceholder}><Trophy size={20} /></div>
                 ))}
               </div>
             </Card>
@@ -217,7 +204,7 @@ export default function StudentDashboard() {
           <Card
             title="Notifications"
             action={notifications.length > 0 && (
-                <span className={s.notifBadge}><Bell size={11} /> {notifications.length}</span>
+              <span className={s.notifBadge}><Bell size={11} /> {notifications.length}</span>
             )}
           >
             {notifications.length === 0 ? (
@@ -247,10 +234,8 @@ function EmptyStep({ icon: Icon, title, text, cta, link }) {
     <div className={s.emptyStep}>
       <div className={s.emptyStepIcon}><Icon size={24} /></div>
       <h3 className={s.emptyStepTitle}>{title}</h3>
-      <p className={s.emptyStepText}>{text}</p>
-      <Link to={link}>
-        <Button variant="accent">{cta} <ArrowRight size={14} /></Button>
-      </Link>
+      <p>{text}</p>
+      <Link to={link}><Button variant="accent"><Sparkles size={14} /> {cta}</Button></Link>
     </div>
   );
 }

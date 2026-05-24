@@ -38,6 +38,7 @@ const userSchema = new mongoose.Schema(
       default: '👋',
     },
     university: { type: String },
+    cv: { type: String, default: null },
     educationLevel: {
       type: String,
       enum: ['matric', 'intermediate', 'bachelors', 'masters', 'phd', 'other'],

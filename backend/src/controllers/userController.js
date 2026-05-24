@@ -63,8 +63,6 @@ export const getStudentSessions = async (req, res, next) => {
     res.json(sessions);
   } catch (error) { next(error); }
 };
-
-// ... keep your existing getMe, updateProfile, updatePassword, updateSettings functions here ...
 export const getMe = async (req, res, next) => { /* existing code */ };
 export const updateProfile = async (req, res, next) => { /* existing code */ };
 export const updatePassword = async (req, res, next) => { /* existing code */ };

@@ -3,7 +3,7 @@ import React, { useState, useMemo, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   GraduationCap, Mail, Lock, User as UserIcon, AlertCircle, Sparkles,
-  Users, ShieldCheck, Eye, EyeOff, Check, X, Loader2, Building2, Camera, ChevronDown, Briefcase
+  Users, ShieldCheck, Eye, EyeOff, Check, X, Loader2, Building2, Camera, ChevronDown, Briefcase, UploadCloud, FileText
 } from "lucide-react";
 import Button from "../../components/common/Button.jsx";
 import { Field, Input } from "../../components/common/Field.jsx";
@@ -15,7 +15,6 @@ import s from "./Auth.module.css";
 const ROLES = [
   { value: "Student", label: "Student", Icon: GraduationCap },
   { value: "Mentor", label: "Mentor", Icon: Users },
-  { value: "Admin", label: "Admin", Icon: ShieldCheck },
 ];
 
 const PAK_UNIVERSITIES = [
@@ -87,6 +86,9 @@ export default function RegisterPage() {
   const [expertise, setExpertise] = useState("");
   const [avatar, setAvatar] = useState(null);
 
+  const [cvFile, setCvFile] = useState(null);
+  const cvInputRef = useRef(null);
+
   const [uniSearch, setUniSearch] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
@@ -152,16 +154,22 @@ export default function RegisterPage() {
     setError("");
 
     try {
-      const payload = {
-        name: name.trim(),
-        email: email.trim().toLowerCase(),
-        password,
-        role: role.toLowerCase(),
-        avatar: avatar || null,
-        ...(role === "Student" && { university: university.trim() }),
-        ...(role === "Mentor" && { expertise: expertise.trim() }), // 🚨 FIXED MENTOR PAYLOAD BUG
-      };
-      await api.post("/auth/register", payload);
+      // 🚨 USE FORMDATA INSTEAD OF JSON 🚨
+      const formData = new FormData();
+      formData.append("name", name.trim());
+      formData.append("email", email.trim().toLowerCase());
+      formData.append("password", password);
+      formData.append("role", role.toLowerCase());
+      if (avatar) formData.append("avatar", avatar);
+
+      if (role === "Student") {
+        formData.append("university", university.trim());
+        if (cvFile) formData.append("cv", cvFile); // Attach the file!
+      }
+      if (role === "Mentor") formData.append("expertise", expertise.trim());
+
+      // Axios automatically sets multipart/form-data when you pass a FormData object!
+      await api.post("/auth/register", formData);
       navigate("/login", { replace: true });
     } catch (err) {
       const msg = err.response?.data?.message;
@@ -285,6 +293,7 @@ export default function RegisterPage() {
               {emailError && <span className={`${s.inlineMsg} ${s.inlineMsgError}`}><AlertCircle size={12} /> {emailError}</span>}
             </Field>
 
+            {/* 🚨 THE MISSING UNIVERSITY BLOCK 🚨 */}
             {role === "Student" && (
               <Field label="University / Institution" required>
                 <div className={s.inputGroup} ref={dropdownRef} style={{ position: 'relative' }}>
@@ -376,6 +385,47 @@ export default function RegisterPage() {
                 {universityError && <span className={`${s.inlineMsg} ${s.inlineMsgError}`}><AlertCircle size={12} /> {universityError}</span>}
               </Field>
             )}
+
+            {/* 🚨 THE RESUME/CV BLOCK 🚨 */}
+            {role === "Student" && (
+              <Field label="Resume / CV (Optional)">
+                <div
+                  className={`${s.fileUploadWrapper} ${cvFile ? s.fileUploaded : ""}`}
+                  onClick={() => cvInputRef.current?.click()}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") cvInputRef.current?.click(); }}
+                >
+                  <input
+                    type="file"
+                    accept=".pdf,.doc,.docx"
+                    ref={cvInputRef}
+                    onChange={(e) => setCvFile(e.target.files[0])}
+                    style={{ display: 'none' }}
+                  />
+                  <div className={s.fileUploadInner}>
+                    <div className={s.fileUploadIcon}>
+                      {cvFile ? <FileText size={20} /> : <UploadCloud size={20} />}
+                    </div>
+                    <div className={s.fileUploadText}>
+                      {cvFile ? (
+                        <>
+                          <span className={s.fileName}>{cvFile.name}</span>
+                          <span className={s.fileSize}>
+                            {(cvFile.size / 1024 / 1024).toFixed(2)} MB
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <span className={s.filePlaceholder}>Click to upload your resume</span>
+                          <span className={s.fileHints}>PDF, DOC, or DOCX (Max 5MB)</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </Field>
+            )}  
 
             {/* 🚨 NEW MENTOR EXPERTISE SEARCHABLE DROPDOWN 🚨 */}
             {role === "Mentor" && (

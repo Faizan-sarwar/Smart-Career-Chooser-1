@@ -1,11 +1,12 @@
-// src/routes/authRoutes.js
+// backend/src/routes/authRoutes.js
 import express from 'express';
 import { registerUser, authUser } from '../controllers/authController.js';
+import upload from '../middlewares/uploadMiddleware.js'; // 🚨 IMPORT MIDDLEWARE
 
 const router = express.Router();
 
-// Define routes and attach their controllers
-router.post('/register', registerUser);
+// 🚨 ADD upload.single('cv') TO INTERCEPT THE FILE 🚨
+router.post('/register', upload.single('cv'), registerUser);
 router.post('/login', authUser);
 
 export default router;

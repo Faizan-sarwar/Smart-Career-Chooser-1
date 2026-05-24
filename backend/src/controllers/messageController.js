@@ -2,15 +2,41 @@
 
 import Message from '../models/Message.js';
 import User from '../models/User.js';
+import MentorRequest from '../models/MentorRequest.js'; // 🚨 Added to verify relationships
+import { getReceiverSocketId, io } from '../socket/socket.js';
 
-// @desc    Get all allowed contacts (e.g., all real users except yourself)
+// @desc    Get ONLY officially connected contacts
 // @route   GET /api/messages/contacts
 export const getContacts = async (req, res, next) => {
   try {
-    // Fetch all users except the currently logged-in user
-    const users = await User.find({ _id: { $ne: req.user._id } })
-      .select('name role avatar')
-      .lean();
+    let users = [];
+    const role = req.user.role.toLowerCase();
+
+    if (role === 'mentor') {
+      // 🚨 PRIVACY LOCK: Mentors only see students who they have ACCEPTED
+      const acceptedRequests = await MentorRequest.find({
+        mentor: req.user._id,
+        status: 'accepted'
+      }).populate('student', 'name role avatar updatedAt').lean();
+
+      users = acceptedRequests.map(r => r.student).filter(Boolean);
+    }
+    else if (role === 'student') {
+      // 🚨 PRIVACY LOCK: Students only see their ACCEPTED mentor
+      const acceptedRequest = await MentorRequest.findOne({
+        student: req.user._id,
+        status: 'accepted'
+      }).populate('mentor', 'name role avatar updatedAt').lean();
+
+      if (acceptedRequest && acceptedRequest.mentor) {
+        users.push(acceptedRequest.mentor);
+      }
+    }
+    else {
+      // Admins see everyone
+      users = await User.find({ _id: { $ne: req.user._id } }).select('name role avatar updatedAt').lean();
+    }
+
     res.json(users);
   } catch (err) {
     next(err);
@@ -45,11 +71,16 @@ export const getThread = async (req, res, next) => {
         id: targetUser._id,
         name: targetUser.name,
         title: targetUser.role,
-        avatar: targetUser.avatar || '👋'
+        avatar: targetUser.avatar || '👋',
+        updatedAt: targetUser.updatedAt // Needed for "Active Now" status
       },
       messages: messages.map(m => ({
         _id: String(m._id),
         text: m.body,
+        mediaUrl: m.mediaUrl || null,
+        mediaType: m.mediaType || null,
+        isEdited: m.isEdited || false,
+        isDeleted: m.isDeleted || false,
         from: m.sender.toString() === req.user._id.toString() ? 'me' : 'them',
         createdAt: formatTime(m.createdAt),
         createdAtISO: m.createdAt,
@@ -66,25 +97,90 @@ export const getThread = async (req, res, next) => {
 export const sendMessage = async (req, res, next) => {
   try {
     const { text } = req.body;
-    if (!text) {
+    const file = req.file; // For Instagram-style media
+
+    if (!text && !file) {
       res.status(400);
-      throw new Error('Message text is required');
+      throw new Error('Content is required');
+    }
+
+    let mediaUrl = null;
+    let mediaType = null;
+
+    if (file) {
+      mediaUrl = file.path.replace(/\\/g, '/');
+      mediaType = file.mimetype.startsWith('video/') ? 'video' : 'image';
     }
 
     const message = await Message.create({
       sender: req.user._id,
       recipient: req.params.userId,
-      body: text.trim()
+      body: text ? text.trim() : '',
+      mediaUrl,
+      mediaType
     });
 
-    res.status(201).json({
+    const formattedMessage = {
       _id: String(message._id),
       text: message.body,
-      from: 'me',
+      mediaUrl: message.mediaUrl,
+      mediaType: message.mediaType,
+      isEdited: message.isEdited || false,
+      isDeleted: message.isDeleted || false,
+      from: 'them', // Relative to the receiver
       createdAt: formatTime(message.createdAt),
       createdAtISO: message.createdAt,
       read: false
-    });
+    };
+
+    // 🚨 INSTANT WEBSOCKET DELIVERY 🚨
+    const receiverSocketId = getReceiverSocketId(req.params.userId);
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit("newMessage", formattedMessage);
+    }
+
+    res.status(201).json({ ...formattedMessage, from: 'me' });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// 🚨 MISSING EXPORT ADDED: Edit Message
+// @route   PUT /api/messages/:msgId/edit
+export const editMessage = async (req, res, next) => {
+  try {
+    const message = await Message.findById(req.params.msgId);
+    if (!message || message.sender.toString() !== req.user._id.toString()) {
+      res.status(403);
+      throw new Error('Not authorized');
+    }
+
+    message.body = req.body.text;
+    message.isEdited = true;
+    await message.save();
+
+    res.json({ success: true, text: message.body, isEdited: true });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// 🚨 MISSING EXPORT ADDED: Delete Message
+// @route   DELETE /api/messages/:msgId/delete
+export const deleteMessage = async (req, res, next) => {
+  try {
+    const message = await Message.findById(req.params.msgId);
+    if (!message || message.sender.toString() !== req.user._id.toString()) {
+      res.status(403);
+      throw new Error('Not authorized');
+    }
+
+    message.isDeleted = true;
+    message.body = "";
+    message.mediaUrl = null;
+    await message.save();
+
+    res.json({ success: true, isDeleted: true });
   } catch (err) {
     next(err);
   }

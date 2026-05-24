@@ -17,6 +17,7 @@ import {
   Calendar,
   CalendarPlus,
   ExternalLink,
+  FileText
 } from "lucide-react";
 import { Page, PageHead } from "../../components/common/Page.jsx";
 import Card from "../../components/common/Card.jsx";
@@ -200,10 +201,10 @@ export default function MyMentees() {
                         m.status === "excelling"
                           ? "success"
                           : m.status === "active"
-                          ? "primary"
-                          : m.status === "inactive"
-                          ? "danger"
-                          : "warning"
+                            ? "primary"
+                            : m.status === "inactive"
+                              ? "danger"
+                              : "warning"
                       }
                     >
                       {m.statusDisplay}
@@ -292,10 +293,10 @@ function MenteeDetailDrawer({ detail, loading, onClose }) {
                   m.status === "excelling"
                     ? "success"
                     : m.status === "active"
-                    ? "primary"
-                    : m.status === "inactive"
-                    ? "danger"
-                    : "warning"
+                      ? "primary"
+                      : m.status === "inactive"
+                        ? "danger"
+                        : "warning"
                 }
               >
                 {m.statusDisplay}
@@ -308,17 +309,33 @@ function MenteeDetailDrawer({ detail, loading, onClose }) {
         </header>
 
         <div className={s.detailBody}>
-          {/* Quick action */}
-          <Button
-            variant="accent"
-            onClick={() =>
-              navigate("/mentor/sessions", {
-                state: { menteeId: m.id, menteeName: m.name },
-              })
-            }
-          >
-            <CalendarPlus size={14} /> Schedule a session
-          </Button>
+          {/* 🚨 UPDATED QUICK ACTIONS WITH CV BUTTON 🚨 */}
+          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '8px' }}>
+            <Button
+              variant="accent"
+              onClick={() =>
+                navigate("/mentor/sessions", {
+                  state: { menteeId: m.id, menteeName: m.name },
+                })
+              }
+            >
+              <CalendarPlus size={14} /> Schedule a session
+            </Button>
+
+            {/* Only show the button if the student uploaded a CV */}
+            {m.cv && (
+              <a
+                href={`http://localhost:5000/${m.cv}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ textDecoration: 'none' }}
+              >
+                <Button variant="secondary">
+                  <FileText size={14} /> View Resume
+                </Button>
+              </a>
+            )}
+          </div>
 
           {/* Assessment */}
           <section className={s.detailSection}>
@@ -416,8 +433,8 @@ function MenteeDetailDrawer({ detail, loading, onClose }) {
                         s2.status === "completed"
                           ? "success"
                           : s2.status === "cancelled" || s2.status === "no-show"
-                          ? "danger"
-                          : "primary"
+                            ? "danger"
+                            : "primary"
                       }
                     >
                       {s2.status}

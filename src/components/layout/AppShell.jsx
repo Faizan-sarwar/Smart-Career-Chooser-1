@@ -6,7 +6,7 @@ import { Outlet, NavLink, useNavigate, useLocation } from "react-router-dom";
 import {
   LayoutGrid, ClipboardCheck, Sparkles, Map, TrendingUp, Calendar, Users,
   MessageSquare, Search, Bell, LogOut, GraduationCap, UsersRound, ShieldCheck,
-  Menu, X, Briefcase, Settings, User, BookOpen, AlertTriangle, Info, Sun, Moon, CalendarClock, Activity
+  Menu, X, Briefcase, Settings, User, BookOpen, AlertTriangle, Info, Sun, Moon, CalendarClock, Activity, UserPlus, Inbox
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext.jsx";
 import api from "../../lib/axios.js";
@@ -17,6 +17,7 @@ const STUDENT_NAV = [
   { to: "/student/assessment", icon: ClipboardCheck, label: "Assessment" },
   { to: "/student/recommendations", icon: Sparkles, label: "Recommendations" },
   { to: "/student/roadmap", icon: Map, label: "Skill Roadmap" },
+  { to: "/student/mentors", icon: UserPlus, label: "Find Mentor" }, // 🚨 RESTORED
   { to: "/student/market", icon: TrendingUp, label: "Market Insights" },
   { to: "/student/hub", icon: Calendar, label: "Events Hub" },
   { to: "/student/community", icon: Users, label: "Community" },
@@ -25,6 +26,7 @@ const STUDENT_NAV = [
 
 const MENTOR_NAV = [
   { to: "/mentor/dashboard", icon: LayoutGrid, label: "Dashboard" },
+  { to: "/mentor/requests", icon: Inbox, label: "Requests" }, // 🚨 RESTORED
   { to: "/mentor/mentees", icon: UsersRound, label: "My Mentees" },
   { to: "/mentor/sessions", icon: CalendarClock, label: "Sessions" },
   { to: "/mentor/insights", icon: Activity, label: "Insights" },
@@ -115,7 +117,7 @@ export default function AppShell() {
         }
       } else if (role === "mentor") {
         if (mounted) {
-          setNotifications([{ id: "m1", color: "var(--color-primary)", text: "Welcome to the Mentor Hub. Awaiting mentee requests.", time: "Just now" }]);
+          setNotifications([{ id: "m1", color: "var(--color-primary)", text: "Welcome to the Mentor Hub.", time: "Just now" }]);
           setUnreadCount(1);
         }
       }
@@ -135,7 +137,6 @@ export default function AppShell() {
     navigate("/login");
   };
 
-  // 🚨 BULLETPROOF INITIALS GENERATOR 🚨
   const safeName = (user && user.name && typeof user.name === 'string') ? user.name : "User";
   const initials = safeName.split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase();
 
@@ -307,7 +308,6 @@ export default function AppShell() {
 
           <div className={s.topbarRight} style={{ position: 'relative', overflow: 'visible', display: 'flex', alignItems: 'center', gap: '16px' }}>
 
-            {/* 🚨 THEME TOGGLE BUTTON 🚨 */}
             <button
               className={s.iconBtn}
               aria-label="Toggle Theme"
@@ -317,7 +317,6 @@ export default function AppShell() {
               {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
             </button>
 
-            {/* 🚨 DYNAMIC NOTIFICATIONS BUTTON 🚨 */}
             <button
               className={s.iconBtn}
               aria-label="Notifications"
@@ -358,7 +357,6 @@ export default function AppShell() {
                           onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-bg)'}
                           onMouseLeave={(e) => e.currentTarget.style.backgroundColor = isUnread ? 'var(--color-primary-faint)' : 'transparent'}
                         >
-                          {/* ADMIN LOGIC */}
                           {role === "admin" ? (
                             <>
                               <div style={{ fontSize: '13px', color: 'var(--color-text)', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -372,7 +370,6 @@ export default function AppShell() {
                               <div style={{ fontSize: '11px', color: isUnread ? 'var(--color-primary)' : 'var(--color-muted)', marginTop: '8px', fontWeight: isUnread ? 'bold' : 'normal' }}>{n.time}</div>
                             </>
                           ) : (
-                            /* STUDENT/MENTOR LOGIC */
                             <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
                               <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: n.color || 'var(--color-primary)', marginTop: '5px', flexShrink: 0 }} />
                               <div>

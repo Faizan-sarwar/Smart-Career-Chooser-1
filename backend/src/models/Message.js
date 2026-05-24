@@ -5,7 +5,11 @@ const messageSchema = new mongoose.Schema(
   {
     sender: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     recipient: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    body: { type: String, required: true, trim: true },
+    body: { type: String, default: '' }, // No longer 'required' (you can send just a photo)
+    mediaUrl: { type: String, default: null },
+    mediaType: { type: String, enum: ['image', 'video', null], default: null },
+    isEdited: { type: Boolean, default: false },
+    isDeleted: { type: Boolean, default: false },
     read: { type: Boolean, default: false },
   },
   { timestamps: true }

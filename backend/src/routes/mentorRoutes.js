@@ -1,4 +1,5 @@
 // backend/src/routes/mentorRoutes.js
+
 import express from 'express';
 import {
   getDashboard,
@@ -9,32 +10,31 @@ import {
   createSession,
   updateSession,
   deleteSession,
-  getChatThreads,     // 🚨 ADDED
-  sendMessage,        // 🚨 ADDED
-  updateMenteeNotes   // 🚨 ADDED
 } from '../controllers/mentorController.js';
+import {
+  listIncomingRequests,
+  respondToRequest,
+} from '../controllers/mentorRequestController.js';
 import { protect, authorize } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
-// All mentor routes require Mentor role
 router.use(protect, authorize('Mentor'));
 
+// Dashboard + roster
 router.get('/dashboard', getDashboard);
-
 router.get('/mentees', listMentees);
 router.get('/mentees/:id', getMenteeDetail);
-router.patch('/mentees/:id/notes', updateMenteeNotes); // 🚨 ROUTE FOR PRIVATE NOTES
-
 router.get('/insights', getInsights);
 
+// Sessions
 router.get('/sessions', listSessions);
 router.post('/sessions', createSession);
 router.patch('/sessions/:id', updateSession);
 router.delete('/sessions/:id', deleteSession);
 
-// 🚨 ROUTES FOR THE CHAT HUB
-router.get('/messages/threads', getChatThreads);
-router.post('/messages/:id/send', sendMessage);
+// Mentor request inbox 
+router.get('/requests', listIncomingRequests);
+router.post('/requests/:id/respond', respondToRequest);
 
 export default router;

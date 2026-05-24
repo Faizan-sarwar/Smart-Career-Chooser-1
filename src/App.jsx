@@ -7,6 +7,8 @@ import "./index.css";
 
 import { AuthProvider, useAuth } from "../src/context/AuthContext.jsx";
 import { AssessmentProvider } from "../src/context/AssessmentContext.jsx";
+import { SocketProvider } from "../src/context/SocketContext.jsx";
+import { NotificationProvider } from "../src/context/NotificationContext.jsx"; // 🚨 ADDED IMPORT
 
 import LoginPage from "./pages/auth/LoginPage.jsx";
 import RegisterPage from "./pages/auth/RegisterPage.jsx";
@@ -26,13 +28,15 @@ import StudentMessages from "./pages/student/StudentMessages.jsx";
 import ProfilePage from "./pages/student/ProfilePage.jsx";
 import SettingsPage from "./pages/student/SettingsPage.jsx";
 import NotificationsPage from "./pages/student/NotificationsPage.jsx";
+import FindMentor from "./pages/student/FindMentor.jsx";
 
 import MentorDashboard from "./pages/mentor/MentorDashboard.jsx";
 import MyMentees from "./pages/mentor/MyMentees.jsx";
 import MentorSessions from "./pages/mentor/MentorSessions.jsx";
 import MentorInsights from "./pages/mentor/MentorInsights.jsx";
+import CommunicationHub from "./pages/mentor/CommunicationHub.jsx";
+import MentorRequests from "./pages/mentor/MentorRequests.jsx";
 
-// ADMIN IMPORTS
 import AdminDashboard from "./pages/admin/AdminDashboard.jsx";
 import UserManagement from "./pages/admin/UserManagement.jsx";
 import ManageMarket from "./pages/admin/ManageMarket.jsx";
@@ -56,14 +60,10 @@ function AnimatedRouter() {
   return (
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
-        {/* Public Routes with transitions */}
         <Route path="/" element={<PageTransition><Home /></PageTransition>} />
         <Route path="/login" element={<PageTransition><LoginPage /></PageTransition>} />
         <Route path="/register" element={<PageTransition><RegisterPage /></PageTransition>} />
 
-        {/* Note: The ProtectedRoute/AppShell wrap their children. 
-            Internal sub-page transitions are handled inside AppShell.jsx 
-        */}
         <Route element={<ProtectedRoute role="student"><AppShell /></ProtectedRoute>}>
           <Route path="/student/dashboard" element={<StudentDashboard />} />
           <Route path="/student/assessment" element={<AssessmentFlow />} />
@@ -72,13 +72,13 @@ function AnimatedRouter() {
           <Route path="/student/roadmap" element={<SkillRoadmap />} />
           <Route path="/student/community" element={<CommunityFeed />} />
           <Route path="/student/hub" element={<CommunityHub />} />
+          <Route path="/student/mentors" element={<FindMentor />} />
           <Route path="/student/messages" element={<StudentMessages />} />
           <Route path="/student/profile" element={<ProfilePage />} />
           <Route path="/student/settings" element={<SettingsPage />} />
           <Route path="/student/notifications" element={<NotificationsPage />} />
         </Route>
 
-        {/* Mentor portal */}
         <Route
           path="/mentor"
           element={
@@ -89,14 +89,13 @@ function AnimatedRouter() {
         >
           <Route index element={<Navigate to="/mentor/dashboard" replace />} />
           <Route path="dashboard" element={<MentorDashboard />} />
+          <Route path="requests" element={<MentorRequests />} />
           <Route path="mentees" element={<MyMentees />} />
           <Route path="mentees/:id" element={<MyMentees />} />
           <Route path="sessions" element={<MentorSessions />} />
           <Route path="insights" element={<MentorInsights />} />
-          {/* Keep your existing CommunicationHub component if it exists */}
-          {/* <Route path="hub" element={<CommunicationHub />} /> */}
+          <Route path="hub" element={<CommunicationHub />} />
         </Route>
-
 
         <Route element={<ProtectedRoute role="admin"><AppShell /></ProtectedRoute>}>
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
@@ -118,11 +117,15 @@ function AnimatedRouter() {
 export default function App() {
   return (
     <AuthProvider>
-      <AssessmentProvider>
-        <BrowserRouter>
-          <AnimatedRouter />
-        </BrowserRouter>
-      </AssessmentProvider>
+      <NotificationProvider>
+        <SocketProvider>
+          <AssessmentProvider>
+            <BrowserRouter>
+              <AnimatedRouter />
+            </BrowserRouter>
+          </AssessmentProvider>
+        </SocketProvider>
+      </NotificationProvider>
     </AuthProvider>
   );
 }

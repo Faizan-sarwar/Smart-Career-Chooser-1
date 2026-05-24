@@ -1,83 +1,71 @@
-// src/controllers/authController.js
 import User from '../models/User.js';
 import generateToken from '../utils/generateToken.js';
 
-// @desc    Register a new user
-// @route   POST /api/auth/register
-// @access  Public
 export const registerUser = async (req, res, next) => {
   try {
-    const { name, email, password, role, university, careerInterests, avatar } = req.body;
+    const { name, email, password, role, university, expertise, careerInterests, avatar } = req.body;
+    const requestedRole = role.toLowerCase();
 
     // 1. Check if user already exists
-    const userExists = await User.findOne({ email });
+    const userExists = await User.findOne({ email: email.toLowerCase() });
     if (userExists) {
       res.status(400);
       throw new Error('User already exists');
     }
 
-    // 2. Create the user
+    // 🚨 2. CRITICAL SECURITY LOCK: Prevent unauthorized Admin creation 🚨
+    if (requestedRole === 'admin') {
+      // Check if ANY admin already exists in the entire database
+      const existingAdmin = await User.findOne({ role: 'admin' });
+
+      if (existingAdmin) {
+        // If an admin exists, block this request completely with a 403 Forbidden status
+        res.status(403);
+        throw new Error('Access Denied: An administrator already exists. New admins must be created internally.');
+      }
+    }
+
+    // 3. Get the CV file path (if uploaded)
+    const cvPath = req.file ? req.file.path.replace(/\\/g, '/') : null;
+
+    // 4. Create the user
     const user = await User.create({
-      name,
-      email,
+      name: name.trim(),
+      email: email.toLowerCase().trim(),
       password,
-      role: role.toLowerCase(), // Ensures 'Admin' becomes 'admin'
+      role: requestedRole,
       avatar: avatar || '👋',
-      // Safely handle role-specific data:
-      university: role === 'student' ? university : undefined,
-      expertise: role === 'mentor' ? university : undefined, // Reusing the frontend variable
-      careerInterests: careerInterests || [] // If empty, save an empty array, not undefined
+      university: requestedRole === 'student' ? university : undefined,
+      expertise: requestedRole === 'mentor' ? expertise : undefined,
+      careerInterests: careerInterests ? JSON.parse(careerInterests) : [],
+      cv: requestedRole === 'student' ? cvPath : undefined
     });
 
-    // 3. Send success response with token
+    // 5. Send success response
     if (user) {
       res.status(201).json({
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        avatar: user.avatar,
+        _id: user._id, name: user.name, email: user.email, role: user.role, avatar: user.avatar,
         token: generateToken(user._id, user.role),
       });
     } else {
-      res.status(400);
-      throw new Error('Invalid user data');
+      res.status(400); throw new Error('Invalid user data');
     }
-  } catch (error) {
-    next(error); // Passes error to your global error handler in server.js
-  }
+  } catch (error) { next(error); }
 };
-
-// @desc    Authenticate user & get token (Login)
 
 export const authUser = async (req, res, next) => {
   try {
     const { email, password } = req.body;
+    if (!email || !password) { res.status(400); throw new Error('Please provide both email and password'); }
 
-    // 🛑 ADD THIS: Validate that both email and password were provided
-    if (!email || !password) {
-      res.status(400);
-      throw new Error('Please provide both email and password');
-    }
-
-    // 1. Find user by email and explicitly select the password field
     const user = await User.findOne({ email }).select('+password');
-
-    // 2. Check if user exists AND password matches
     if (user && (await user.matchPassword(password))) {
       res.json({
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        avatar: user.avatar,
+        _id: user._id, name: user.name, email: user.email, role: user.role, avatar: user.avatar,
         token: generateToken(user._id, user.role),
       });
     } else {
-      res.status(401);
-      throw new Error('Invalid email or password');
+      res.status(401); throw new Error('Invalid email or password');
     }
-  } catch (error) {
-    next(error);
-  }
+  } catch (error) { next(error); }
 };

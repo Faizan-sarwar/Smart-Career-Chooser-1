@@ -1,47 +1,41 @@
 // src/pages/student/StudentMessages.jsx
-
 import React, { useEffect, useRef, useState, useCallback } from "react";
-import { Send, ShieldCheck, AlertCircle, RotateCw, CheckCheck, Users } from "lucide-react";
+import { Send, ShieldCheck, AlertCircle, RotateCw, CheckCheck, Users, Paperclip, MoreVertical, Edit2, Trash2, X, Image as ImageIcon } from "lucide-react";
 import { Page, PageHead } from "../../components/common/Page.jsx";
 import { useAuth } from "../../context/AuthContext.jsx";
 import api from "../../lib/axios.js";
 import s from "./StudentMessages.module.css";
-
-const POLL_INTERVAL_MS = 8000;
+import { useSocket } from "../../context/SocketContext.jsx";
 
 export default function StudentMessages() {
   const { user } = useAuth();
 
-  // NEW: State to hold all real database users
+  // 🚨 WEB SOCKETS 🚨
+  const { socket, onlineUsers } = useSocket();
+
   const [contacts, setContacts] = useState([]);
   const [activeContactId, setActiveContactId] = useState(null);
-
   const [contact, setContact] = useState(null);
   const [messages, setMessages] = useState([]);
   const [draft, setDraft] = useState("");
+  const [mediaFile, setMediaFile] = useState(null);
+  const [editingMsg, setEditingMsg] = useState(null);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
-  const [retryingId, setRetryingId] = useState(null);
 
   const listRef = useRef(null);
-  const textareaRef = useRef(null);
-  const isAtBottomRef = useRef(true);
-  const pollTimerRef = useRef(null);
+  const fileInputRef = useRef(null);
   const initialLoadRef = useRef(true);
 
-  // 1. Fetch all real users on page load
+  // 1. Fetch Contacts
   useEffect(() => {
     const fetchContacts = async () => {
       try {
         const { data } = await api.get("/messages/contacts");
         setContacts(data);
-        // Automatically select the first user if they exist
-        if (data.length > 0) {
-          setActiveContactId(data[0]._id);
-        } else {
-          setLoading(false);
-        }
+        if (data.length > 0) setActiveContactId(data[0]._id);
+        else setLoading(false);
       } catch (err) {
         setError("Failed to load contacts.");
         setLoading(false);
@@ -50,10 +44,9 @@ export default function StudentMessages() {
     fetchContacts();
   }, []);
 
-  // 2. Fetch the specific chat thread for the selected user
+  // 2. Fetch Thread
   const fetchThread = useCallback(async ({ silent = false } = {}) => {
     if (!activeContactId) return;
-
     try {
       const { data } = await api.get(`/messages/${activeContactId}`);
       setContact(data.contact);
@@ -62,238 +55,155 @@ export default function StudentMessages() {
         return [...data.messages, ...tempMessages];
       });
       if (!silent) setError("");
-    } catch (err) {
-      if (!silent) setError("Could not load messages.");
-    } finally {
-      if (initialLoadRef.current) {
-        setLoading(false);
-        initialLoadRef.current = false;
-      }
-    }
+    } catch (err) { if (!silent) setError("Could not load messages."); }
+    finally { if (initialLoadRef.current) { setLoading(false); initialLoadRef.current = false; } }
   }, [activeContactId]);
 
-  // 3. Polling lifecycle (resets when you switch users)
+  // 3. Load thread on contact change
   useEffect(() => {
     if (!activeContactId) return;
-
-    initialLoadRef.current = true;
-    setLoading(true);
-    setMessages([]);
+    initialLoadRef.current = true; setLoading(true); setMessages([]); setDraft(""); setMediaFile(null); setEditingMsg(null);
     fetchThread();
-
-    const startPolling = () => {
-      if (pollTimerRef.current) return;
-      pollTimerRef.current = setInterval(() => fetchThread({ silent: true }), POLL_INTERVAL_MS);
-    };
-
-    const stopPolling = () => {
-      if (pollTimerRef.current) {
-        clearInterval(pollTimerRef.current);
-        pollTimerRef.current = null;
-      }
-    };
-
-    const handleVisibility = () => {
-      if (document.hidden) stopPolling();
-      else {
-        fetchThread({ silent: true });
-        startPolling();
-      }
-    };
-
-    startPolling();
-    document.addEventListener("visibilitychange", handleVisibility);
-
-    return () => {
-      stopPolling();
-      document.removeEventListener("visibilitychange", handleVisibility);
-    };
+    // 🚨 Polling removed! WebSockets handle new messages now.
   }, [activeContactId, fetchThread]);
 
-  const handleScroll = () => {
-    const el = listRef.current;
-    if (!el) return;
-    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
-    isAtBottomRef.current = distanceFromBottom < 80;
-  };
-
+  // 4. Real-time Message Listener
   useEffect(() => {
-    if (!listRef.current) return;
-    if (isAtBottomRef.current) {
-      listRef.current.scrollTop = listRef.current.scrollHeight;
-    }
-  }, [messages.length]);
+    if (!socket || !activeContactId) return;
 
-  const send = async () => {
-    const text = draft.trim();
-    if (!text || sending || !activeContactId) return;
-
-    setSending(true);
-    const tempId = `temp-${Date.now()}`;
-    const nowDate = new Date();
-    const optimistic = {
-      _id: tempId,
-      text,
-      from: "me",
-      createdAt: formatTime(nowDate),
-      createdAtISO: nowDate.toISOString(),
-      pending: true,
+    const handleNewMessage = (newMessage) => {
+      // Append the incoming message to the chat
+      setMessages((prev) => [...prev, newMessage]);
     };
 
-    setMessages((m) => [...m, optimistic]);
-    setDraft("");
-    isAtBottomRef.current = true;
+    socket.on("newMessage", handleNewMessage);
+    return () => socket.off("newMessage", handleNewMessage);
+  }, [socket, activeContactId]);
 
-    if (textareaRef.current) textareaRef.current.style.height = "auto";
+  // 5. Auto-scroll
+  useEffect(() => { if (listRef.current) listRef.current.scrollTop = listRef.current.scrollHeight; }, [messages.length]);
 
-    try {
-      const { data } = await api.post(`/messages/${activeContactId}`, { text });
-      setMessages((m) => m.map((msg) => (msg._id === tempId ? data : msg)));
-    } catch (err) {
-      setMessages((m) =>
-        m.map((msg) => (msg._id === tempId ? { ...msg, failed: true, pending: false } : msg))
-      );
-    } finally {
-      setSending(false);
+  const handleSend = async () => {
+    const text = draft.trim();
+    if ((!text && !mediaFile) || sending || !activeContactId) return;
+
+    if (editingMsg) {
+      setSending(true);
+      try {
+        await api.put(`/messages/${editingMsg._id}/edit`, { text });
+        setMessages(m => m.map(msg => msg._id === editingMsg._id ? { ...msg, text, isEdited: true } : msg));
+        setDraft(""); setEditingMsg(null);
+      } catch (err) { alert("Failed to edit message"); }
+      finally { setSending(false); }
+      return;
     }
-  };
 
-  const retry = async (failedMsg) => {
-    setRetryingId(failedMsg._id);
+    setSending(true);
     try {
-      const { data } = await api.post(`/messages/${activeContactId}`, { text: failedMsg.text });
-      setMessages((m) => m.map((msg) => (msg._id === failedMsg._id ? data : msg)));
-    } catch (err) { }
-    finally { setRetryingId(null); }
+      const formData = new FormData();
+      if (text) formData.append("text", text);
+      if (mediaFile) formData.append("media", mediaFile);
+
+      const { data } = await api.post(`/messages/${activeContactId}`, formData);
+      setMessages((m) => [...m, data]);
+      setDraft(""); setMediaFile(null);
+    } catch (err) { alert("Failed to send message"); }
+    finally { setSending(false); }
   };
 
-  const handleDraftChange = (e) => {
-    setDraft(e.target.value);
-    e.target.style.height = "auto";
-    e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`;
+  const handleDelete = async (msgId) => {
+    if (!window.confirm("Delete this message for everyone?")) return;
+    try {
+      await api.delete(`/messages/${msgId}/delete`);
+      setMessages(m => m.map(msg => msg._id === msgId ? { ...msg, isDeleted: true, text: "", mediaUrl: null } : msg));
+    } catch (err) { alert("Failed to delete"); }
   };
 
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      send();
-    }
-  };
-
-  const canSend = !loading && !sending && !error && draft.trim().length > 0 && activeContactId;
-  const groupedMessages = groupByDay(messages);
+  const handleKeyDown = (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } };
 
   return (
     <Page>
-      <PageHead
-        title="Messages"
-        subtitle="Connect with mentors and peers in your network."
-      />
-
-      <div className={s.notice}>
-        <Users size={14} />
-        <span>Select a user from your allowed contacts to start chatting securely.</span>
-      </div>
-
+      <PageHead title="Messages" subtitle="Connect securely with your network." />
       <div className={s.layout}>
-        {/* DYNAMIC SIDEBAR LISTING REAL DB USERS */}
+        {/* SIDEBAR */}
         <aside className={s.sidebar}>
-          <div className={s.sideTitle}>Allowed contacts</div>
-          {contacts.length === 0 && !loading ? (
-            <div className={s.lockedNote}>No other users registered yet.</div>
-          ) : (
-            contacts.map((c) => (
-              <div
-                key={c._id}
-                onClick={() => setActiveContactId(c._id)}
-                className={`${s.contact} ${activeContactId === c._id ? s.contactActive : ""}`}
-                style={{ cursor: 'pointer' }}
-              >
-                <div className={s.avatar} style={{ overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  {c.avatar && c.avatar.length > 10 ? (
-                    <img src={c.avatar} alt={c.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  ) : (
-                    c.avatar || "👋"
-                  )}
+          <div className={s.sideTitle}>Contacts</div>
+          {contacts.map((c) => {
+            const isOnline = onlineUsers.includes(c._id);
+            return (
+              <div key={c._id} onClick={() => setActiveContactId(c._id)} className={`${s.contact} ${activeContactId === c._id ? s.contactActive : ""}`}>
+                <div className={s.avatar} style={{ overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+                  {c.avatar && c.avatar.length > 10 ? <img src={c.avatar} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : (c.avatar || "👋")}
+                  {isOnline && <span style={{ position: 'absolute', bottom: 0, right: 0, width: 10, height: 10, backgroundColor: 'var(--color-success)', borderRadius: '50%', border: '2px solid var(--color-surface)' }} />}
                 </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div className={s.contactName}>
-                    {c.name}
-                    {c.role === 'mentor' && <ShieldCheck size={14} className={s.verified} />}
-                  </div>
-                  <div className={s.contactRole} style={{ textTransform: 'capitalize' }}>
-                    {c.role}
-                  </div>
+                <div style={{ flex: 1 }}>
+                  <div className={s.contactName}>{c.name}</div>
+                  <div className={s.contactRole}>{c.role}</div>
                 </div>
               </div>
-            ))
-          )}
+            );
+          })}
         </aside>
 
         {/* CHAT WINDOW */}
         <section className={s.chat}>
           <header className={s.chatHead}>
-            <div className={s.avatar}>{contact?.avatar || "👋"}</div>
-            <div style={{ flex: 1, minWidth: 0 }}>
+            <div className={s.avatar} style={{ overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {contact?.avatar && contact.avatar.length > 10 ? <img src={contact.avatar} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : (contact?.avatar || "👋")}
+            </div>
+            <div>
               <div className={s.headName}>{contact?.name || "Select a contact"}</div>
               <div className={s.headSub}>
-                {error ? "Connection error" : loading ? "Connecting…" : "Active now"}
+                {/* 🚨 WEBSOCKET STATUS 🚨 */}
+                {error ? "Connection error" : loading ? "Connecting…" : (
+                  onlineUsers.includes(activeContactId) ? (
+                    <span style={{ color: "var(--color-success)", fontWeight: "600" }}>🟢 Active now</span>
+                  ) : (
+                    getStatusText(contact?.updatedAt)
+                  )
+                )}
               </div>
             </div>
           </header>
 
-          <div ref={listRef} className={s.list} onScroll={handleScroll}>
-            {loading ? (
-              <div className={s.empty}><div className={s.miniRing} /></div>
-            ) : error ? (
-              <div className={s.empty}>
-                <AlertCircle size={28} color="var(--color-danger)" />
-                <p style={{ marginTop: 12 }}>{error}</p>
-                <button className={s.retryFetchBtn} onClick={() => fetchThread()}>
-                  <RotateCw size={14} /> Retry
-                </button>
-              </div>
-            ) : !activeContactId ? (
-              <div className={s.empty}>
-                <div className={s.emptyEmoji}>👋</div>
-                <p>Select a contact from the left to start messaging.</p>
-              </div>
-            ) : messages.length === 0 ? (
-              <div className={s.empty}>
-                <div className={s.emptyEmoji}>👋</div>
-                <p>Say hello to {contact?.name}!</p>
-              </div>
-            ) : (
-              groupedMessages.map((group) => (
-                <React.Fragment key={group.label}>
-                  <div className={s.daySep}><span>{group.label}</span></div>
-                  {group.items.map((m) => (
-                    <MessageBubble
-                      key={m._id}
-                      message={m}
-                      onRetry={() => retry(m)}
-                      retrying={retryingId === m._id}
-                    />
-                  ))}
-                </React.Fragment>
-              ))
-            )}
+          <div ref={listRef} className={s.list}>
+            {messages.map((m) => (
+              <MessageBubble
+                key={m._id}
+                message={m}
+                onEdit={() => { setEditingMsg(m); setDraft(m.text); }}
+                onDelete={() => handleDelete(m._id)}
+              />
+            ))}
           </div>
 
-          <div className={s.composer}>
-            <textarea
-              ref={textareaRef}
-              placeholder={`Message ${contact?.name || "..."}`}
-              value={draft}
-              onChange={handleDraftChange}
-              onKeyDown={handleKeyDown}
-              disabled={loading || !!error || !activeContactId}
-              autoComplete="off"
-              rows={1}
-            />
-            <button onClick={send} className={s.sendBtn} disabled={!canSend}>
-              <Send size={16} />
-            </button>
+          <div className={s.composerArea}>
+            {editingMsg && (
+              <div style={{ padding: '8px 16px', background: 'var(--color-primary-faint)', fontSize: '12px', display: 'flex', justifyContent: 'space-between' }}>
+                <span>Editing message...</span>
+                <X size={14} style={{ cursor: 'pointer' }} onClick={() => { setEditingMsg(null); setDraft(""); }} />
+              </div>
+            )}
+            {mediaFile && (
+              <div style={{ padding: '8px 16px', background: 'var(--color-surface)', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <ImageIcon size={14} color="var(--color-primary)" /> {mediaFile.name}
+                <X size={14} style={{ cursor: 'pointer', marginLeft: 'auto' }} onClick={() => setMediaFile(null)} />
+              </div>
+            )}
+
+            <div className={s.composer}>
+              <input type="file" ref={fileInputRef} style={{ display: 'none' }} accept="image/*,video/*" onChange={e => setMediaFile(e.target.files[0])} />
+
+              <button className={s.attachBtn} onClick={() => fileInputRef.current?.click()} disabled={!!editingMsg}>
+                <Paperclip size={18} />
+              </button>
+
+              <textarea placeholder={editingMsg ? "Edit message..." : "Type a message..."} value={draft} onChange={e => setDraft(e.target.value)} onKeyDown={handleKeyDown} rows={1} />
+
+              <button onClick={handleSend} className={s.sendBtn} disabled={(!draft.trim() && !mediaFile) || sending}>
+                <Send size={16} />
+              </button>
+            </div>
           </div>
         </section>
       </div>
@@ -301,56 +211,73 @@ export default function StudentMessages() {
   );
 }
 
-function MessageBubble({ message, onRetry, retrying }) {
+// 🚨 BUBBLE WITH 3-DOT MENU 🚨
+function MessageBubble({ message, onEdit, onDelete }) {
   const m = message;
   const isMe = m.from === "me";
+  const [showMenu, setShowMenu] = useState(false);
+
+  if (m.isDeleted) {
+    return (
+      <div className={`${s.msg} ${isMe ? s.msgMe : s.msgThem}`} style={{ opacity: 0.6, fontStyle: 'italic' }}>
+        <div className={s.msgText}>🚫 This message was deleted.</div>
+      </div>
+    );
+  }
 
   return (
-    <div className={`${s.msg} ${isMe ? s.msgMe : s.msgThem} ${m.failed ? s.msgFailed : ""} ${m.pending ? s.msgPending : ""}`}>
-      <div className={s.msgText}>{m.text}</div>
+    <div className={`${s.msg} ${isMe ? s.msgMe : s.msgThem}`} onMouseLeave={() => setShowMenu(false)}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          {m.mediaUrl && (
+            <div style={{ marginBottom: m.text ? '8px' : '0', borderRadius: '8px', overflow: 'hidden', maxWidth: '250px' }}>
+              {m.mediaType === 'video' ? (
+                <video src={`http://localhost:5000/${m.mediaUrl}`} controls style={{ width: '100%' }} />
+              ) : (
+                <img src={`http://localhost:5000/${m.mediaUrl}`} alt="Attachment" style={{ width: '100%', display: 'block' }} />
+              )}
+            </div>
+          )}
+          {m.text && <div className={s.msgText}>{m.text}</div>}
+        </div>
+
+        {isMe && !m.pending && (
+          <div style={{ position: 'relative' }}>
+            <button onClick={() => setShowMenu(!showMenu)} style={{ background: 'none', border: 'none', color: 'var(--color-muted)', cursor: 'pointer', padding: '4px' }}>
+              <MoreVertical size={14} />
+            </button>
+            {showMenu && (
+              <div style={{ position: 'absolute', right: 0, top: '100%', background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: '8px', boxShadow: 'var(--shadow-md)', zIndex: 10, padding: '4px', minWidth: '100px' }}>
+                {!m.mediaUrl && (
+                  <button onClick={() => { setShowMenu(false); onEdit(); }} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '6px', padding: '8px', background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', color: 'var(--color-text)' }}>
+                    <Edit2 size={12} /> Edit
+                  </button>
+                )}
+                <button onClick={() => { setShowMenu(false); onDelete(); }} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '6px', padding: '8px', background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', color: 'var(--color-danger)' }}>
+                  <Trash2 size={12} /> Delete
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
       <div className={s.msgFoot}>
-        <span className={s.time}>{m.createdAt} {m.failed && " · failed"}</span>
-        {isMe && !m.failed && !m.pending && (
-          <CheckCheck size={12} className={`${s.readMark} ${m.read ? s.readMarkSeen : ""}`} />
-        )}
-        {m.failed && (
-          <button className={s.retryBtn} onClick={onRetry} disabled={retrying}>
-            <RotateCw size={11} className={retrying ? s.spin : ""} /> Retry
-          </button>
-        )}
+        <span className={s.time}>{m.createdAt}</span>
+        {m.isEdited && <span style={{ fontSize: '10px', color: 'var(--color-muted)', marginLeft: '4px' }}>(edited)</span>}
+        {isMe && !m.pending && <CheckCheck size={12} className={`${s.readMark} ${m.read ? s.readMarkSeen : ""}`} />}
       </div>
     </div>
   );
 }
 
-function formatTime(date) {
-  return new Date(date).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-}
-
-function groupByDay(messages) {
-  if (!messages.length) return [];
-  const groups = [];
-  const today = startOfDay(new Date());
-  const yesterday = new Date(today);
-  yesterday.setDate(yesterday.getDate() - 1);
-
-  for (const m of messages) {
-    const d = m.createdAtISO ? new Date(m.createdAtISO) : new Date();
-    const day = startOfDay(d);
-    let label;
-    if (day.getTime() === today.getTime()) label = "Today";
-    else if (day.getTime() === yesterday.getTime()) label = "Yesterday";
-    else label = d.toLocaleDateString("en-PK", { weekday: "long", month: "short", day: "numeric" });
-
-    const last = groups[groups.length - 1];
-    if (last && last.label === label) last.items.push(m);
-    else groups.push({ label, items: [m] });
-  }
-  return groups;
-}
-
-function startOfDay(date) {
-  const d = new Date(date);
-  d.setHours(0, 0, 0, 0);
-  return d;
+function getStatusText(updatedAt) {
+  if (!updatedAt) return "Offline";
+  const diffMins = (new Date() - new Date(updatedAt)) / (1000 * 60);
+  if (diffMins < 15) return "🟢 Active now";
+  const d = new Date(updatedAt);
+  const isToday = new Date().toDateString() === d.toDateString();
+  if (isToday) return `Last active today at ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+  return `Last active ${d.toLocaleDateString([], { month: 'short', day: 'numeric' })}`;
 }

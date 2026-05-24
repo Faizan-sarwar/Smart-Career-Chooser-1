@@ -13,7 +13,8 @@ import communityRoutes from './src/routes/communityRoutes.js';
 import messageRoutes from './src/routes/messageRoutes.js';
 import adminRoutes from './src/routes/adminRoutes.js';
 import mentorRoutes from './src/routes/mentorRoutes.js';
-import notificationRoutes from './src/routes/notificationRoutes.js'
+import notificationRoutes from './src/routes/notificationRoutes.js';
+import studentRoutes from './src/routes/studentRoutes.js'; // 🚨 ADDED STUDENT ROUTES IMPORT
 
 dotenv.config();
 
@@ -53,8 +54,9 @@ app.use('/api/community', communityRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/mentor', mentorRoutes);
+app.use('/api/student', studentRoutes); // 🚨 MOUNTED STUDENT ROUTES HERE
 app.use('/api/notifications', notificationRoutes);
-
+app.use('/uploads', express.static('uploads'));
 app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'success', message: 'Server is running' });
 });

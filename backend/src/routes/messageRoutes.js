@@ -4,28 +4,28 @@ import {
     getContacts,
     getThread,
     sendMessage,
+    markThreadRead,
+    reactToMessage,
+    editMessage,
+    deleteMessage,
     getUnreadCount,
-    editMessage, // 🚨 Now properly exported
-    deleteMessage // 🚨 Now properly exported
 } from '../controllers/messageController.js';
 import { protect } from '../middlewares/authMiddleware.js';
-
-// Fallback in case chatUploadMiddleware isn't available yet
-import multer from 'multer';
-const upload = multer({ dest: 'uploads/chat/' });
+import { chatUpload } from '../middlewares/chatUploadMiddleware.js';
 
 const router = express.Router();
 
-// General Routes
 router.get('/contacts', protect, getContacts);
 router.get('/unread-count', protect, getUnreadCount);
 
-// Advanced Chat Features (Instagram Style)
+// Per-message ops (must come before /:userId so msgId doesn't conflict)
 router.put('/:msgId/edit', protect, editMessage);
 router.delete('/:msgId/delete', protect, deleteMessage);
+router.post('/:msgId/react', protect, reactToMessage);
 
-// Thread Routes
+// Thread ops
 router.get('/:userId', protect, getThread);
-router.post('/:userId', protect, upload.single('media'), sendMessage);
+router.post('/:userId', protect, chatUpload.single('media'), sendMessage);
+router.put('/:userId/read', protect, markThreadRead);
 
 export default router;

@@ -1,14 +1,26 @@
 // src/App.jsx
-import { AnimatePresence } from "framer-motion";
+//
+// FIXED — the previous version had `<Routes key={location.pathname}>` which
+// caused every route (including AppShell, Topbar, Sidebar) to unmount and
+// remount on every navigation. That made the notification dropdown flash
+// reload-style on each click.
+//
+// Now AppShell mounts ONCE per portal (student/mentor/admin). Only the
+// inner page content animates between routes — which is what AnimatePresence
+// was actually meant for.
+//
+// Also fixed provider order — BrowserRouter is now above NotificationProvider
+// so contexts have access to router state if needed.
+
 import React from "react";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
-import PageTransition from "../src/components/common/PageTransition.jsx";
 import "./index.css";
 
 import { AuthProvider, useAuth } from "../src/context/AuthContext.jsx";
 import { AssessmentProvider } from "../src/context/AssessmentContext.jsx";
 import { SocketProvider } from "../src/context/SocketContext.jsx";
-import { NotificationProvider } from "../src/context/NotificationContext.jsx"; // 🚨 ADDED IMPORT
+import { NotificationProvider } from "../src/context/NotificationContext.jsx";
+import { ChatProvider } from "../src/context/ChatContext.jsx"; // 🚨 ADDED CHAT PROVIDER
 
 import LoginPage from "./pages/auth/LoginPage.jsx";
 import RegisterPage from "./pages/auth/RegisterPage.jsx";
@@ -54,78 +66,87 @@ function Home() {
   return <LandingPage />;
 }
 
-function AnimatedRouter() {
-  const location = useLocation();
-
-  return (
-    <AnimatePresence mode="wait">
-      <Routes location={location} key={location.pathname}>
-        <Route path="/" element={<PageTransition><Home /></PageTransition>} />
-        <Route path="/login" element={<PageTransition><LoginPage /></PageTransition>} />
-        <Route path="/register" element={<PageTransition><RegisterPage /></PageTransition>} />
-
-        <Route element={<ProtectedRoute role="student"><AppShell /></ProtectedRoute>}>
-          <Route path="/student/dashboard" element={<StudentDashboard />} />
-          <Route path="/student/assessment" element={<AssessmentFlow />} />
-          <Route path="/student/recommendations" element={<Recommendations />} />
-          <Route path="/student/market" element={<MarketInsights />} />
-          <Route path="/student/roadmap" element={<SkillRoadmap />} />
-          <Route path="/student/community" element={<CommunityFeed />} />
-          <Route path="/student/hub" element={<CommunityHub />} />
-          <Route path="/student/mentors" element={<FindMentor />} />
-          <Route path="/student/messages" element={<StudentMessages />} />
-          <Route path="/student/profile" element={<ProfilePage />} />
-          <Route path="/student/settings" element={<SettingsPage />} />
-          <Route path="/student/notifications" element={<NotificationsPage />} />
-        </Route>
-
-        <Route
-          path="/mentor"
-          element={
-            <ProtectedRoute role="Mentor">
-              <AppShell />
-            </ProtectedRoute>
-          }
-        >
-          <Route index element={<Navigate to="/mentor/dashboard" replace />} />
-          <Route path="dashboard" element={<MentorDashboard />} />
-          <Route path="requests" element={<MentorRequests />} />
-          <Route path="mentees" element={<MyMentees />} />
-          <Route path="mentees/:id" element={<MyMentees />} />
-          <Route path="sessions" element={<MentorSessions />} />
-          <Route path="insights" element={<MentorInsights />} />
-          <Route path="hub" element={<CommunicationHub />} />
-        </Route>
-
-        <Route element={<ProtectedRoute role="admin"><AppShell /></ProtectedRoute>}>
-          <Route path="/admin/dashboard" element={<AdminDashboard />} />
-          <Route path="/admin/users" element={<UserManagement />} />
-          <Route path="/admin/careers" element={<ManageCareers />} />
-          <Route path="/admin/events" element={<ManageEvents />} />
-          <Route path="/admin/market-data" element={<ManageMarket />} />
-          <Route path="/admin/roadmaps" element={<ManageRoadmaps />} />
-          <Route path="/admin/moderation" element={<Moderation />} />
-          <Route path="/admin/settings" element={<AdminSettings />} />
-        </Route>
-
-        <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
-      </Routes>
-    </AnimatePresence>
-  );
-}
-
 export default function App() {
   return (
     <AuthProvider>
-      <NotificationProvider>
-        <SocketProvider>
-          <AssessmentProvider>
-            <BrowserRouter>
-              <AnimatedRouter />
-            </BrowserRouter>
-          </AssessmentProvider>
-        </SocketProvider>
-      </NotificationProvider>
+      <BrowserRouter>
+        <NotificationProvider>
+          <SocketProvider>
+            <AssessmentProvider>
+              {/* 🚨 CHAT PROVIDER ADDED HERE 🚨 */}
+              <ChatProvider>
+                <Routes>
+                  {/* Public */}
+                  <Route path="/" element={<Home />} />
+                  <Route path="/login" element={<LoginPage />} />
+                  <Route path="/register" element={<RegisterPage />} />
+
+                  {/* Student portal — AppShell mounts ONCE for all student routes */}
+                  <Route
+                    element={
+                      <ProtectedRoute role="student">
+                        <AppShell />
+                      </ProtectedRoute>
+                    }
+                  >
+                    <Route path="/student/dashboard" element={<StudentDashboard />} />
+                    <Route path="/student/assessment" element={<AssessmentFlow />} />
+                    <Route path="/student/recommendations" element={<Recommendations />} />
+                    <Route path="/student/market" element={<MarketInsights />} />
+                    <Route path="/student/roadmap" element={<SkillRoadmap />} />
+                    <Route path="/student/community" element={<CommunityFeed />} />
+                    <Route path="/student/hub" element={<CommunityHub />} />
+                    <Route path="/student/mentors" element={<FindMentor />} />
+                    <Route path="/student/messages" element={<StudentMessages />} />
+                    <Route path="/student/profile" element={<ProfilePage />} />
+                    <Route path="/student/settings" element={<SettingsPage />} />
+                    <Route path="/student/notifications" element={<NotificationsPage />} />
+                  </Route>
+
+                  {/* Mentor portal — AppShell mounts ONCE */}
+                  <Route
+                    path="/mentor"
+                    element={
+                      <ProtectedRoute role="Mentor">
+                        <AppShell />
+                      </ProtectedRoute>
+                    }
+                  >
+                    <Route index element={<Navigate to="/mentor/dashboard" replace />} />
+                    <Route path="dashboard" element={<MentorDashboard />} />
+                    <Route path="requests" element={<MentorRequests />} />
+                    <Route path="mentees" element={<MyMentees />} />
+                    <Route path="mentees/:id" element={<MyMentees />} />
+                    <Route path="sessions" element={<MentorSessions />} />
+                    <Route path="insights" element={<MentorInsights />} />
+                    <Route path="hub" element={<CommunicationHub />} />
+                  </Route>
+
+                  {/* Admin portal — AppShell mounts ONCE */}
+                  <Route
+                    element={
+                      <ProtectedRoute role="admin">
+                        <AppShell />
+                      </ProtectedRoute>
+                    }
+                  >
+                    <Route path="/admin/dashboard" element={<AdminDashboard />} />
+                    <Route path="/admin/users" element={<UserManagement />} />
+                    <Route path="/admin/careers" element={<ManageCareers />} />
+                    <Route path="/admin/events" element={<ManageEvents />} />
+                    <Route path="/admin/market-data" element={<ManageMarket />} />
+                    <Route path="/admin/roadmaps" element={<ManageRoadmaps />} />
+                    <Route path="/admin/moderation" element={<Moderation />} />
+                    <Route path="/admin/settings" element={<AdminSettings />} />
+                  </Route>
+
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </ChatProvider>
+            </AssessmentProvider>
+          </SocketProvider>
+        </NotificationProvider>
+      </BrowserRouter>
     </AuthProvider>
   );
 }

@@ -14,9 +14,14 @@ export const SocketProvider = ({ children }) => {
 
   useEffect(() => {
     if (user) {
-      // Connect to the backend socket, passing the user's ID
+      // 🚨 CRITICAL FIX: Handle both _id and id depending on your auth payload
+      const userId = user._id || user.id;
+
+      if (!userId) return;
+
+      // Connect to the backend socket, passing the correct user ID
       const socketInstance = io("http://localhost:5000", {
-        query: { userId: user._id },
+        query: { userId: String(userId) },
       });
 
       setSocket(socketInstance);

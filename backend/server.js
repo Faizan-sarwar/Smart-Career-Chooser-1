@@ -1,7 +1,11 @@
+// backend/server.js
 import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import mongoose from 'mongoose';
+
+// 🚨 IMPORT THE APP AND SERVER FROM YOUR SOCKET FILE 🚨
+import { app, server } from './src/socket/socket.js';
 
 import authRoutes from './src/routes/authRoutes.js';
 import userRoutes from './src/routes/userRoutes.js';
@@ -14,11 +18,8 @@ import messageRoutes from './src/routes/messageRoutes.js';
 import adminRoutes from './src/routes/adminRoutes.js';
 import mentorRoutes from './src/routes/mentorRoutes.js';
 import notificationRoutes from './src/routes/notificationRoutes.js';
-import studentRoutes from './src/routes/studentRoutes.js'; // 🚨 ADDED STUDENT ROUTES IMPORT
 
 dotenv.config();
-
-const app = express();
 
 // 1. MUST BE FIRST: Enable CORS for your frontend
 app.use(cors());
@@ -43,7 +44,8 @@ app.use((req, res, next) => {
     console.log('------------------------------');
   }
   next();
-})
+});
+
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/assessment', assessmentRoutes);
@@ -54,9 +56,9 @@ app.use('/api/community', communityRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/mentor', mentorRoutes);
-app.use('/api/student', studentRoutes); // 🚨 MOUNTED STUDENT ROUTES HERE
 app.use('/api/notifications', notificationRoutes);
 app.use('/uploads', express.static('uploads'));
+
 app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'success', message: 'Server is running' });
 });
@@ -79,6 +81,8 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+
+// 🚨 MUST USE server.listen INSTEAD OF app.listen SO SOCKETS RUN 🚨
+server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

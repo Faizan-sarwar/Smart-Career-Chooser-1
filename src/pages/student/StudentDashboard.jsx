@@ -193,9 +193,26 @@ export default function StudentDashboard() {
         <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
           {hasRoadmap && (
             <Card title="Recent Badges">
-              <div className={s.badgeGrid}>
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className={s.badgePlaceholder}><Trophy size={20} /></div>
+              {/* 🚨 FIXED BADGE LAYOUT 🚨 */}
+              <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', padding: '8px 0' }}>
+                {[
+                  { id: 1, icon: Trophy, color: '#f59e0b', bg: '#fef3c7', title: 'First Milestone' },
+                  { id: 2, icon: Award, color: '#3b82f6', bg: '#dbeafe', title: 'Top 10%' },
+                  { id: 3, icon: Target, color: '#10b981', bg: '#d1fae5', title: 'Fast Starter' }
+                ].map((badge) => (
+                  <div key={badge.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                    <div style={{
+                      width: '56px', height: '56px', borderRadius: '50%',
+                      background: badge.bg, color: badge.color,
+                      display: 'grid', placeItems: 'center',
+                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                    }}>
+                      <badge.icon size={24} />
+                    </div>
+                    <span style={{ fontSize: '11px', fontWeight: '600', color: 'var(--color-muted)', textAlign: 'center' }}>
+                      {badge.title}
+                    </span>
+                  </div>
                 ))}
               </div>
             </Card>

@@ -7,33 +7,79 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: ['http://localhost:5173'], // Your React frontend URL
+    origin: ['http://localhost:5173'],
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    credentials: true,
   },
 });
 
-// Store online users: { userId: socketId }
-const userSocketMap = {}; 
+// userId → socketId
+const userSocketMap = {};
+// Track typing timeouts to auto-expire stale typing states
+const typingTimeouts = new Map();
 
 export const getReceiverSocketId = (receiverId) => {
-  return userSocketMap[receiverId];
+  if (!receiverId) return null;
+  return userSocketMap[String(receiverId)];
 };
 
 io.on('connection', (socket) => {
-  // Grab the userId from the frontend connection request
-  const userId = socket.handshake.query.userId;
-  
-  if (userId && userId !== "undefined") {
+  // 🚨 CRITICAL FIX: Ensure userId is treated as a clean string
+  const userId = String(socket.handshake.query.userId);
+
+  if (userId && userId !== 'undefined' && userId !== 'null') {
     userSocketMap[userId] = socket.id;
+    console.log(`🟢 User connected: ${userId}`); // Helps you debug in terminal
+    io.emit('getOnlineUsers', Object.keys(userSocketMap));
   }
 
-  // Broadcast the list of currently online users to EVERYONE connected
-  io.emit('getOnlineUsers', Object.keys(userSocketMap));
+  // ── TYPING INDICATORS ──────────────────────────────────────────
+  socket.on('typing', ({ to }) => {
+    if (!userId || !to) return;
+    const recipientSocket = userSocketMap[to];
+    if (!recipientSocket) return;
 
-  // Listen for disconnects
+    io.to(recipientSocket).emit('userTyping', { from: userId });
+
+    const key = `${userId}:${to}`;
+    if (typingTimeouts.has(key)) clearTimeout(typingTimeouts.get(key));
+    typingTimeouts.set(
+      key,
+      setTimeout(() => {
+        io.to(recipientSocket).emit('userStopTyping', { from: userId });
+        typingTimeouts.delete(key);
+      }, 4000)
+    );
+  });
+
+  socket.on('stopTyping', ({ to }) => {
+    if (!userId || !to) return;
+    const recipientSocket = userSocketMap[to];
+    if (!recipientSocket) return;
+
+    io.to(recipientSocket).emit('userStopTyping', { from: userId });
+
+    const key = `${userId}:${to}`;
+    if (typingTimeouts.has(key)) {
+      clearTimeout(typingTimeouts.get(key));
+      typingTimeouts.delete(key);
+    }
+  });
+
+  // ── DISCONNECT ─────────────────────────────────────────────────
   socket.on('disconnect', () => {
-    delete userSocketMap[userId];
-    io.emit('getOnlineUsers', Object.keys(userSocketMap));
+    if (userId && userId !== 'undefined' && userId !== 'null') {
+      console.log(`🔴 User disconnected: ${userId}`);
+      delete userSocketMap[userId];
+
+      for (const [key, handle] of typingTimeouts.entries()) {
+        if (key.startsWith(`${userId}:`)) {
+          clearTimeout(handle);
+          typingTimeouts.delete(key);
+        }
+      }
+      io.emit('getOnlineUsers', Object.keys(userSocketMap));
+    }
   });
 });
 

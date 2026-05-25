@@ -1,4 +1,9 @@
 // src/components/layout/AppShell.jsx
+//
+// FIXED — notification logic moved to NotificationContext (no more own
+// useEffect/polling here). Everything else (theme toggle, search, profile
+// menu, AnimatePresence on Outlet) is preserved.
+
 import { AnimatePresence } from "framer-motion";
 import PageTransition from "../common/PageTransition.jsx";
 import React, { useState, useEffect } from "react";
@@ -6,10 +11,11 @@ import { Outlet, NavLink, useNavigate, useLocation } from "react-router-dom";
 import {
   LayoutGrid, ClipboardCheck, Sparkles, Map, TrendingUp, Calendar, Users,
   MessageSquare, Search, Bell, LogOut, GraduationCap, UsersRound, ShieldCheck,
-  Menu, X, Briefcase, Settings, User, BookOpen, AlertTriangle, Info, Sun, Moon, CalendarClock, Activity, UserPlus, Inbox
+  Menu, X, Briefcase, Settings, User, BookOpen, AlertTriangle, Info, Sun, Moon,
+  CalendarClock, Activity, UserPlus, Inbox, CheckCircle
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext.jsx";
-import api from "../../lib/axios.js";
+import { useNotifications } from "../../context/NotificationContext.jsx"; // 🚨 ADDED
 import s from "./AppShell.module.css";
 
 const STUDENT_NAV = [
@@ -17,7 +23,7 @@ const STUDENT_NAV = [
   { to: "/student/assessment", icon: ClipboardCheck, label: "Assessment" },
   { to: "/student/recommendations", icon: Sparkles, label: "Recommendations" },
   { to: "/student/roadmap", icon: Map, label: "Skill Roadmap" },
-  { to: "/student/mentors", icon: UserPlus, label: "Find Mentor" }, // 🚨 RESTORED
+  { to: "/student/mentors", icon: UserPlus, label: "Find Mentor" },
   { to: "/student/market", icon: TrendingUp, label: "Market Insights" },
   { to: "/student/hub", icon: Calendar, label: "Events Hub" },
   { to: "/student/community", icon: Users, label: "Community" },
@@ -26,7 +32,7 @@ const STUDENT_NAV = [
 
 const MENTOR_NAV = [
   { to: "/mentor/dashboard", icon: LayoutGrid, label: "Dashboard" },
-  { to: "/mentor/requests", icon: Inbox, label: "Requests" }, // 🚨 RESTORED
+  { to: "/mentor/requests", icon: Inbox, label: "Requests" },
   { to: "/mentor/mentees", icon: UsersRound, label: "My Mentees" },
   { to: "/mentor/sessions", icon: CalendarClock, label: "Sessions" },
   { to: "/mentor/insights", icon: Activity, label: "Insights" },
@@ -44,89 +50,57 @@ const ADMIN_NAV = [
   { to: "/admin/settings", icon: Settings, label: "Settings" },
 ];
 
+// Icon for each notification type
+const TYPE_ICONS = {
+  info: Info,
+  success: CheckCircle,
+  warning: AlertTriangle,
+  milestone: Sparkles,
+  event: Calendar,
+  message: MessageSquare,
+};
+
+const TYPE_COLORS = {
+  info: "var(--color-primary)",
+  success: "var(--color-success, #16a34a)",
+  warning: "var(--color-warning, #eab308)",
+  milestone: "var(--color-accent, #f97316)",
+  event: "var(--color-accent, #f97316)",
+  message: "var(--color-primary)",
+};
+
 export default function AppShell() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
+  // 🚨 Pull notifications from context — single source of truth, app-wide
+  const { notifications, unreadCount, markAsRead, markAllRead, refresh } = useNotifications();
+
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [notifMenuOpen, setNotifMenuOpen] = useState(false);
 
-  // ── Theme State ──
+  // ── Theme ──
   const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "dark");
 
-  // ── Search State ──
+  // ── Search ──
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-
-  // ── Dynamic Notifications State ──
-  const [notifications, setNotifications] = useState([]);
-  const [unreadCount, setUnreadCount] = useState(0);
 
   const role = (user?.role || "student").toLowerCase();
   const navItems = role === "mentor" ? MENTOR_NAV : role === "admin" ? ADMIN_NAV : STUDENT_NAV;
   const portalLabel = role === "mentor" ? "Mentor Portal" : role === "admin" ? "Admin Portal" : "Student Portal";
 
-  // 🚨 APPLY THEME GLOBALLY 🚨
+  // Apply theme to <html>
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
     localStorage.setItem("theme", theme);
   }, [theme]);
 
   const toggleTheme = () => {
-    setTheme((prevTheme) => (prevTheme === "dark" ? "light" : "dark"));
+    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
   };
-
-  // 🚨 DYNAMIC NOTIFICATION POLLING 🚨
-  useEffect(() => {
-    let mounted = true;
-
-    const fetchNotifications = async () => {
-      if (role === "admin") {
-        try {
-          const { data } = await api.get("/admin/stats");
-          if (!mounted) return;
-          const notifs = [];
-
-          if (data.totals.pendingReports > 0) {
-            notifs.push({ id: "a1", type: "warning", title: "Action Required", text: `There are ${data.totals.pendingReports} items in the moderation queue.`, time: "Just now" });
-          }
-          notifs.push({ id: "a2", type: "success", title: "System Health", text: `API and Database are online. Serving ${data.totals.users} total users.`, time: "Live status" });
-
-          setNotifications(notifs);
-          setUnreadCount(notifs.length);
-        } catch (err) {
-          if (mounted) {
-            setNotifications([{ id: "err", type: "error", title: "System Offline", text: "CRITICAL: Cannot connect to the API or Database.", time: "Just now" }]);
-            setUnreadCount(1);
-          }
-        }
-      } else if (role === "student") {
-        try {
-          const { data } = await api.get("/users/dashboard");
-          if (mounted && data.notifications) {
-            setNotifications(data.notifications);
-            setUnreadCount(data.notifications.length);
-          }
-        } catch (err) {
-          if (mounted) {
-            setNotifications([{ id: "err", color: "var(--color-danger)", text: "Offline mode: Could not sync your latest roadmap progress.", time: "Just now" }]);
-            setUnreadCount(1);
-          }
-        }
-      } else if (role === "mentor") {
-        if (mounted) {
-          setNotifications([{ id: "m1", color: "var(--color-primary)", text: "Welcome to the Mentor Hub.", time: "Just now" }]);
-          setUnreadCount(1);
-        }
-      }
-    };
-
-    fetchNotifications();
-    const interval = setInterval(fetchNotifications, 60000);
-    return () => { mounted = false; clearInterval(interval); };
-  }, [role]);
 
   const handleLogout = () => {
     if (logout) logout();
@@ -144,6 +118,12 @@ export default function AppShell() {
     setUserMenuOpen(false);
     setNotifMenuOpen(false);
     setIsSearchOpen(false);
+  };
+
+  const handleNotifClick = async (n) => {
+    if (n.unread) await markAsRead(n._id);
+    closeMenus();
+    if (n.link) navigate(n.link);
   };
 
   const searchData = [
@@ -226,6 +206,7 @@ export default function AppShell() {
       <main className={s.main}>
         <header className={s.topbar} style={{ overflow: 'visible', zIndex: 50 }}>
 
+          {/* SEARCH */}
           <div className={s.search} style={{ position: 'relative', overflow: 'visible' }}>
             <Search size={16} style={{ color: 'var(--color-muted)' }} />
             <input
@@ -308,6 +289,7 @@ export default function AppShell() {
 
           <div className={s.topbarRight} style={{ position: 'relative', overflow: 'visible', display: 'flex', alignItems: 'center', gap: '16px' }}>
 
+            {/* THEME TOGGLE */}
             <button
               className={s.iconBtn}
               aria-label="Toggle Theme"
@@ -317,80 +299,117 @@ export default function AppShell() {
               {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
             </button>
 
+            {/* NOTIFICATION BELL — wired to context */}
             <button
               className={s.iconBtn}
-              aria-label="Notifications"
-              onClick={() => { setNotifMenuOpen(!notifMenuOpen); setUserMenuOpen(false); setIsSearchOpen(false); }}
+              aria-label={`Notifications (${unreadCount} unread)`}
+              onClick={() => {
+                const next = !notifMenuOpen;
+                setNotifMenuOpen(next);
+                setUserMenuOpen(false);
+                setIsSearchOpen(false);
+                if (next) refresh();
+              }}
               style={{ position: 'relative', zIndex: 50 }}
             >
               <Bell size={18} />
-              {unreadCount > 0 && <span className={s.notifDot} style={{ position: 'absolute', top: '0px', right: '0px', width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--color-danger)', border: '2px solid var(--color-surface)' }} />}
+              {unreadCount > 0 && (
+                <span style={{
+                  position: 'absolute', top: 4, right: 4,
+                  minWidth: 18, height: 18, padding: '0 5px',
+                  borderRadius: 9, background: 'var(--color-accent, #f97316)',
+                  color: 'white', fontSize: 10, fontWeight: 800,
+                  display: 'grid', placeItems: 'center',
+                  border: '2px solid var(--color-surface)',
+                  fontVariantNumeric: 'tabular-nums',
+                }}>
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
             </button>
 
             {notifMenuOpen && (
               <div style={{
-                position: 'absolute', top: '50px', right: '150px', width: '340px',
+                position: 'absolute', top: '50px', right: '150px', width: '360px',
                 backgroundColor: 'var(--glass-bg, var(--color-surface))', backdropFilter: 'blur(16px)',
                 border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)',
-                boxShadow: 'var(--shadow-xl)', zIndex: 100, overflow: 'hidden'
+                boxShadow: 'var(--shadow-xl)', zIndex: 100, overflow: 'hidden',
+                maxHeight: '480px', display: 'flex', flexDirection: 'column'
               }}>
                 <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--color-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontWeight: '800', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-text)' }}>Notifications</span>
-                  {unreadCount > 0 && <span style={{ background: 'var(--color-primary-soft)', color: 'var(--color-primary-dark)', padding: '2px 8px', borderRadius: '10px', fontSize: '11px', fontWeight: 'bold' }}>{unreadCount} New</span>}
+                  <span style={{ fontWeight: '800', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-text)' }}>
+                    Notifications
+                  </span>
+                  {unreadCount > 0 && (
+                    <span style={{ background: 'var(--color-primary-soft)', color: 'var(--color-primary-dark)', padding: '2px 8px', borderRadius: '10px', fontSize: '11px', fontWeight: 'bold' }}>
+                      {unreadCount} New
+                    </span>
+                  )}
                 </div>
 
-                <div style={{ maxHeight: '320px', overflowY: 'auto' }}>
+                <div style={{ overflowY: 'auto', flex: 1 }}>
                   {notifications.length === 0 ? (
-                    <div style={{ padding: '24px 16px', textAlign: 'center', fontSize: '13px', color: 'var(--color-muted)' }}>
-                      You're all caught up!
+                    <div style={{ padding: '40px 16px', textAlign: 'center', color: 'var(--color-muted)' }}>
+                      <Bell size={28} style={{ opacity: 0.3, marginBottom: 8 }} />
+                      <div style={{ fontSize: '13px', fontWeight: 600 }}>You're all caught up.</div>
+                      <div style={{ fontSize: '12px', marginTop: 4 }}>New notifications will appear here.</div>
                     </div>
                   ) : (
-                    notifications.map((n, idx) => {
-                      const isUnread = idx < unreadCount;
+                    notifications.map((n) => {
+                      const Icon = TYPE_ICONS[n.type] || Info;
+                      const color = TYPE_COLORS[n.type] || 'var(--color-primary)';
                       return (
                         <div
-                          key={n.id || idx}
+                          key={n._id}
+                          onClick={() => handleNotifClick(n)}
                           style={{
-                            padding: '14px 16px', borderBottom: '1px solid var(--color-border)', cursor: 'pointer', transition: 'background 0.2s',
-                            backgroundColor: isUnread ? 'var(--color-primary-faint)' : 'transparent'
+                            padding: '12px 16px', borderBottom: '1px solid var(--color-border)',
+                            cursor: 'pointer', transition: 'background 0.2s',
+                            backgroundColor: n.unread ? 'var(--color-primary-faint)' : 'transparent',
+                            display: 'flex', gap: 10, alignItems: 'flex-start'
                           }}
                           onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-bg)'}
-                          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = isUnread ? 'var(--color-primary-faint)' : 'transparent'}
+                          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = n.unread ? 'var(--color-primary-faint)' : 'transparent'}
                         >
-                          {role === "admin" ? (
-                            <>
-                              <div style={{ fontSize: '13px', color: 'var(--color-text)', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                {n.type === 'error' && <AlertTriangle size={14} color="var(--color-danger)" />}
-                                {n.type === 'warning' && <AlertTriangle size={14} color="var(--color-warning)" />}
-                                {n.type === 'success' && <ShieldCheck size={14} color="var(--color-success)" />}
-                                {n.type === 'info' && <Info size={14} color="var(--color-primary)" />}
-                                {n.title}
-                              </div>
-                              <div style={{ fontSize: '13px', color: 'var(--color-muted)', marginTop: '4px', lineHeight: '1.4' }}>{n.text}</div>
-                              <div style={{ fontSize: '11px', color: isUnread ? 'var(--color-primary)' : 'var(--color-muted)', marginTop: '8px', fontWeight: isUnread ? 'bold' : 'normal' }}>{n.time}</div>
-                            </>
-                          ) : (
-                            <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
-                              <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: n.color || 'var(--color-primary)', marginTop: '5px', flexShrink: 0 }} />
-                              <div>
-                                <div style={{ fontSize: '13px', color: 'var(--color-text)', fontWeight: isUnread ? '700' : '500', lineHeight: '1.4' }}>{n.text}</div>
-                                <div style={{ fontSize: '11px', color: isUnread ? 'var(--color-primary)' : 'var(--color-muted)', marginTop: '8px', fontWeight: isUnread ? 'bold' : 'normal' }}>{n.time}</div>
-                              </div>
+                          <div style={{
+                            width: 32, height: 32, borderRadius: '50%',
+                            background: `${color}1a`, color,
+                            display: 'grid', placeItems: 'center', flexShrink: 0,
+                          }}>
+                            <Icon size={15} />
+                          </div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: '13px', color: 'var(--color-text)', fontWeight: n.unread ? 700 : 500, lineHeight: 1.4 }}>
+                              {n.text || n.body}
                             </div>
+                            <div style={{ fontSize: '11px', color: 'var(--color-muted)', marginTop: 4 }}>
+                              {n.timeAgo}
+                            </div>
+                          </div>
+                          {n.unread && (
+                            <span style={{
+                              width: 8, height: 8, borderRadius: '50%',
+                              background: 'var(--color-accent)', flexShrink: 0, marginTop: 8,
+                            }} />
                           )}
                         </div>
                       );
                     })
                   )}
                 </div>
-                {unreadCount > 0 && (
-                  <div onClick={() => setUnreadCount(0)} style={{ padding: '12px', textAlign: 'center', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-primary)', cursor: 'pointer', fontWeight: '800', background: 'var(--color-bg)' }}>
+
+                {notifications.length > 0 && unreadCount > 0 && (
+                  <div
+                    onClick={markAllRead}
+                    style={{ padding: '12px', textAlign: 'center', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-primary)', cursor: 'pointer', fontWeight: '800', background: 'var(--color-bg)', borderTop: '1px solid var(--color-border)' }}
+                  >
                     Mark all as read
                   </div>
                 )}
               </div>
             )}
 
+            {/* PROFILE BLOCK */}
             <div
               className={s.userBlock}
               onClick={() => { setUserMenuOpen(!userMenuOpen); setNotifMenuOpen(false); setIsSearchOpen(false); }}
@@ -454,7 +473,6 @@ export default function AppShell() {
         </header>
 
         <div className={s.content}>
-          {/* 🚨 WRAP THE OUTLET IN ANIMATE PRESENCE 🚨 */}
           <AnimatePresence mode="wait">
             <PageTransition key={location.pathname}>
               <Outlet />

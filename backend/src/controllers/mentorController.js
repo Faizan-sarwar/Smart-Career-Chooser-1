@@ -107,14 +107,8 @@ export const listMentees = async (req, res, next) => {
   }
 };
 
-// THE FIX — case-insensitive role check + verbose logging
 export const getMenteeDetail = async (req, res, next) => {
   try {
-    console.log(
-      `[getMenteeDetail] mentor=${req.user._id} requesting mentee=${req.params.id}`
-    );
-
-    // Verify accepted relationship first
     const isAccepted = await MentorRequest.findOne({
       mentor: req.user._id,
       student: req.params.id,
@@ -122,28 +116,26 @@ export const getMenteeDetail = async (req, res, next) => {
     });
 
     if (!isAccepted) {
-      console.log('[getMenteeDetail] No accepted relationship found');
       res.status(403);
       throw new Error('This student is not in your accepted roster');
     }
 
     const mentee = await User.findById(req.params.id).select('-password').lean();
     if (!mentee) {
-      console.log('[getMenteeDetail] User not found in DB');
       res.status(404);
       throw new Error('Mentee not found');
     }
 
-    // Case-insensitive role check
     const role = String(mentee.role || '').toLowerCase();
-    console.log(`[getMenteeDetail] Found user "${mentee.name}" with role "${mentee.role}"`);
-
     if (role !== 'student') {
       res.status(404);
-      throw new Error(
-        `User "${mentee.name}" has role "${mentee.role}", not Student`
-      );
+      throw new Error(`User "${mentee.name}" has role "${mentee.role}", not Student`);
     }
+
+    // 🚨 cv is a STRING path (e.g. "uploads/cvs/Faizan_xxx.pdf"), not an object.
+    const cvPath = typeof mentee.cv === 'string' ? mentee.cv.trim() : '';
+    const hasCv = cvPath.length > 0;
+    const cvFileName = hasCv ? cvPath.split('/').pop() : null;
 
     const [assessment, roadmap, recentSessions] = await Promise.all([
       AssessmentResult.findOne({ user: mentee._id }).sort({ createdAt: -1 }).lean(),
@@ -153,6 +145,11 @@ export const getMenteeDetail = async (req, res, next) => {
 
     res.json({
       ...formatMentee(mentee, assessment, roadmap),
+
+      // CV metadata — derived from the string path
+      hasCv,
+      cvFileName,
+
       assessment: assessment
         ? {
           hollandCode: assessment.hollandCode,

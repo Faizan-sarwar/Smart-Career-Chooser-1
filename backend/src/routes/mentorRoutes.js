@@ -15,6 +15,7 @@ import {
   listIncomingRequests,
   respondToRequest,
 } from '../controllers/mentorRequestController.js';
+import { viewMenteeCV } from '../controllers/cvController.js';
 import { protect, authorize } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
@@ -25,6 +26,7 @@ router.use(protect, authorize('Mentor'));
 router.get('/dashboard', getDashboard);
 router.get('/mentees', listMentees);
 router.get('/mentees/:id', getMenteeDetail);
+router.get('/mentees/:id/cv', viewMenteeCV); // 🚨 NEW
 router.get('/insights', getInsights);
 
 // Sessions
@@ -33,7 +35,7 @@ router.post('/sessions', createSession);
 router.patch('/sessions/:id', updateSession);
 router.delete('/sessions/:id', deleteSession);
 
-// Mentor request inbox 
+// Mentor request inbox
 router.get('/requests', listIncomingRequests);
 router.post('/requests/:id/respond', respondToRequest);
 

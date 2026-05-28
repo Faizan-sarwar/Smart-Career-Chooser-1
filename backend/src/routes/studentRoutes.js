@@ -1,7 +1,4 @@
 // backend/src/routes/studentRoutes.js
-//
-// Student-facing endpoints related to mentor connections.
-// Mount with: app.use('/api/student', studentRoutes);
 
 import express from 'express';
 import {
@@ -9,18 +6,30 @@ import {
   listMyRequests,
   sendRequest,
   cancelRequest,
-  generateAIAssistIntro // 🚨 ADDED
+  generateAIAssistIntro,
 } from '../controllers/mentorRequestController.js';
+import {
+  uploadCV,
+  deleteCV,
+  getMyCV,
+} from '../controllers/cvController.js';
 import { protect, authorize } from '../middlewares/authMiddleware.js';
+import { cvUpload } from '../middlewares/cvUploadMiddleware.js';
 
 const router = express.Router();
 
 router.use(protect, authorize('Student'));
 
+// Mentor browse + requests
 router.get('/mentors', listAvailableMentors);
 router.get('/mentor-requests', listMyRequests);
 router.post('/mentor-requests', sendRequest);
-router.post('/mentor-requests/ai-assist', generateAIAssistIntro); // 🚨 AI ROUTE ADDED
+router.post('/mentor-requests/ai-assist', generateAIAssistIntro);
 router.delete('/mentor-requests/:id', cancelRequest);
+
+// CV upload/manage
+router.get('/cv', getMyCV);
+router.post('/cv', cvUpload.single('cv'), uploadCV);
+router.delete('/cv', deleteCV);
 
 export default router;

@@ -244,6 +244,23 @@ export default function MyMentees() {
 function MenteeDetailDrawer({ detail, loading, onClose }) {
   const navigate = useNavigate();
 
+  // Fetch the CV through authenticated axios, then open the PDF blob
+  // in a new tab. A plain <a href> would 401 since the route is protected.
+  const handleViewCV = async (menteeId) => {
+    try {
+      const response = await api.get(`/mentor/mentees/${menteeId}/cv`, {
+        responseType: "blob",
+      });
+      const url = window.URL.createObjectURL(
+        new Blob([response.data], { type: "application/pdf" })
+      );
+      window.open(url, "_blank");
+      setTimeout(() => window.URL.revokeObjectURL(url), 10000);
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to load CV");
+    }
+  };
+
   if (loading) {
     return (
       <div className={s.scrim} onClick={onClose}>
@@ -309,7 +326,7 @@ function MenteeDetailDrawer({ detail, loading, onClose }) {
         </header>
 
         <div className={s.detailBody}>
-          {/* 🚨 UPDATED QUICK ACTIONS WITH CV BUTTON 🚨 */}
+          {/* 🚨 QUICK ACTIONS WITH CV BUTTON 🚨 */}
           <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '8px' }}>
             <Button
               variant="accent"
@@ -322,20 +339,25 @@ function MenteeDetailDrawer({ detail, loading, onClose }) {
               <CalendarPlus size={14} /> Schedule a session
             </Button>
 
-            {/* Only show the button if the student uploaded a CV */}
-            {m.cv && (
-              <a
-                href={`http://localhost:5000/${m.cv}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ textDecoration: 'none' }}
-              >
-                <Button variant="secondary">
-                  <FileText size={14} /> View Resume
-                </Button>
-              </a>
+            {/* Show only if the student uploaded a CV. Fetch via authed
+                axios → blob → open in new tab (a plain <a> would 401). */}
+            {m.hasCv && (
+              <Button variant="secondary" onClick={() => handleViewCV(m.id)}>
+                <FileText size={14} /> View Resume
+              </Button>
             )}
           </div>
+
+          {/* CV status line */}
+          {m.hasCv ? (
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 16, fontSize: 12, color: 'var(--color-success, #16a34a)', fontWeight: 600 }}>
+              <FileText size={12} /> CV on file{m.cvFileName ? ` · ${m.cvFileName}` : ''}
+            </div>
+          ) : (
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 16, fontSize: 12, color: 'var(--color-muted)', fontStyle: 'italic' }}>
+              <FileText size={12} /> No CV uploaded yet
+            </div>
+          )}
 
           {/* Assessment */}
           <section className={s.detailSection}>

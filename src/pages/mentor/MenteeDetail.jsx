@@ -1,8 +1,17 @@
 // src/pages/mentor/MenteeDetail.jsx
+//
+// UPDATED — adds a "View CV" button in the header. Visible only if
+// the student has uploaded a CV. Opens the PDF in a new tab.
+
 import React, { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Tooltip } from "recharts";
-import { AlertCircle, RefreshCw, Save, Loader2, CalendarPlus } from "lucide-react";
+import {
+  ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis,
+  PolarRadiusAxis, Radar, Tooltip,
+} from "recharts";
+import {
+  AlertCircle, RefreshCw, Save, Loader2, CalendarPlus, FileText,
+} from "lucide-react";
 import { Page, PageHead, TwoCol, Grid } from "../../components/common/Page.jsx";
 import Card from "../../components/common/Card.jsx";
 import Badge from "../../components/common/Badge.jsx";
@@ -49,8 +58,47 @@ export default function MenteeDetail() {
     }
   };
 
-  if (loading) return <Page><div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '50vh', color: 'var(--color-muted)' }}><Loader2 className="spin" size={40} style={{ marginBottom: 16, color: 'var(--color-primary)' }} /> Loading mentee profile...</div></Page>;
-  if (error) return <Page><div style={{ textAlign: 'center', padding: '50px', color: 'var(--color-danger)' }}><AlertCircle size={32} /><h3>Error</h3><p>{error}</p><Button onClick={fetchMentee}><RefreshCw size={14} /> Retry</Button></div></Page>;
+  // 🚨 Open CV in a new tab. We need to attach the auth token to the
+  // request so we use fetch + blob URL instead of a direct link.
+  const handleViewCV = async () => {
+    try {
+      const response = await api.get(`/mentor/mentees/${id}/cv`, {
+        responseType: "blob",
+      });
+      const url = window.URL.createObjectURL(
+        new Blob([response.data], { type: "application/pdf" })
+      );
+      window.open(url, "_blank");
+      // Revoke after a delay so the tab has time to load it
+      setTimeout(() => window.URL.revokeObjectURL(url), 10000);
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to load CV");
+    }
+  };
+
+  if (loading) {
+    return (
+      <Page>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '50vh', color: 'var(--color-muted)' }}>
+          <Loader2 className="spin" size={40} style={{ marginBottom: 16, color: 'var(--color-primary)' }} />
+          Loading mentee profile...
+        </div>
+      </Page>
+    );
+  }
+
+  if (error) {
+    return (
+      <Page>
+        <div style={{ textAlign: 'center', padding: '50px', color: 'var(--color-danger)' }}>
+          <AlertCircle size={32} />
+          <h3>Error</h3>
+          <p>{error}</p>
+          <Button onClick={fetchMentee}><RefreshCw size={14} /> Retry</Button>
+        </div>
+      </Page>
+    );
+  }
 
   return (
     <Page>
@@ -58,9 +106,16 @@ export default function MenteeDetail() {
         title="Mentee Profile"
         subtitle={<Link to="/mentor/dashboard" style={{ color: "var(--color-primary)", fontWeight: 600 }}>← Back to roster</Link>}
         actions={
-          <Button variant="accent" onClick={() => navigate("/mentor/sessions", { state: { menteeId: mentee.id, menteeName: mentee.name } })}>
-            <CalendarPlus size={14} /> Schedule session
-          </Button>
+          <div style={{ display: 'flex', gap: 8 }}>
+            {mentee.hasCv && (
+              <Button variant="secondary" onClick={handleViewCV}>
+                <FileText size={14} /> View CV
+              </Button>
+            )}
+            <Button variant="accent" onClick={() => navigate("/mentor/sessions", { state: { menteeId: mentee.id, menteeName: mentee.name } })}>
+              <CalendarPlus size={14} /> Schedule session
+            </Button>
+          </div>
         }
       />
 
@@ -71,6 +126,17 @@ export default function MenteeDetail() {
         <div className={s.info} style={{ flex: 1 }}>
           <div className={s.name} style={{ fontSize: '24px', fontWeight: 800 }}>{mentee.name}</div>
           <div className={s.meta} style={{ color: 'var(--color-muted)', fontSize: '14px' }}>{mentee.program || "Student"} · Last active {mentee.lastActiveLabel || "recently"}</div>
+
+          {/* CV status indicator under the name */}
+          {mentee.hasCv ? (
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 6, fontSize: 12, color: 'var(--color-success, #16a34a)', fontWeight: 600 }}>
+              <FileText size={12} /> CV uploaded · {mentee.cvFileName}
+            </div>
+          ) : (
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 6, fontSize: 12, color: 'var(--color-muted)', fontStyle: 'italic' }}>
+              <FileText size={12} /> No CV uploaded yet
+            </div>
+          )}
         </div>
         <Badge tone={mentee.status === "excelling" ? "success" : mentee.status === "inactive" ? "danger" : "primary"}>
           {mentee.statusDisplay || mentee.status}
@@ -80,15 +146,23 @@ export default function MenteeDetail() {
       <Grid cols={3}>
         <Card title="Overall progress">
           <ProgressBar value={mentee.progress || 0} label="Roadmap completion" />
-          <div style={{ marginTop: 12, fontSize: 13, color: "var(--color-muted)" }}>Completed {mentee.completedMilestones || 0} of {mentee.totalMilestones || 0} milestones.</div>
+          <div style={{ marginTop: 12, fontSize: 13, color: "var(--color-muted)" }}>
+            Completed {mentee.completedMilestones || 0} of {mentee.totalMilestones || 0} milestones.
+          </div>
         </Card>
         <Card title="Target Career">
           <div style={{ fontSize: 18, fontWeight: 700 }}>{mentee.careerTitle || "Not set"}</div>
-          {mentee.hollandCode && <div style={{ color: "var(--color-primary)", fontSize: 13, fontWeight: 700, marginTop: '4px' }}>Holland Code: {mentee.hollandCode}</div>}
+          {mentee.hollandCode && (
+            <div style={{ color: "var(--color-primary)", fontSize: 13, fontWeight: 700, marginTop: '4px' }}>
+              Holland Code: {mentee.hollandCode}
+            </div>
+          )}
         </Card>
         <Card title="Mentor sessions">
           <div style={{ fontSize: 18, fontWeight: 700 }}>{mentee.completedSessions || 0} completed</div>
-          <div style={{ color: "var(--color-muted)", fontSize: 13, marginTop: '4px' }}>Next: {mentee.nextSession || "None scheduled"}</div>
+          <div style={{ color: "var(--color-muted)", fontSize: 13, marginTop: '4px' }}>
+            Next: {mentee.nextSession || "None scheduled"}
+          </div>
         </Card>
       </Grid>
 
@@ -106,7 +180,9 @@ export default function MenteeDetail() {
                 </RadarChart>
               </ResponsiveContainer>
             ) : (
-              <div style={{ height: '100%', display: 'grid', placeItems: 'center', color: 'var(--color-muted)', fontStyle: 'italic' }}>No skill data available.</div>
+              <div style={{ height: '100%', display: 'grid', placeItems: 'center', color: 'var(--color-muted)', fontStyle: 'italic' }}>
+                No skill data available.
+              </div>
             )}
           </div>
         </Card>

@@ -4,7 +4,6 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import mongoose from 'mongoose';
 
-// 🚨 IMPORT THE APP AND SERVER FROM YOUR SOCKET FILE 🚨
 import { app, server } from './src/socket/socket.js';
 
 import authRoutes from './src/routes/authRoutes.js';
@@ -18,19 +17,14 @@ import messageRoutes from './src/routes/messageRoutes.js';
 import adminRoutes from './src/routes/adminRoutes.js';
 import mentorRoutes from './src/routes/mentorRoutes.js';
 import notificationRoutes from './src/routes/notificationRoutes.js';
+import studentRoutes from './src/routes/studentRoutes.js'; // 🚨 ADDED
 
 dotenv.config();
 
-// 1. MUST BE FIRST: Enable CORS for your frontend
 app.use(cors());
-
-// 2. MUST BE SECOND: Parse incoming JSON payloads (only once!)
 app.use(express.json({ limit: '1mb' }));
-
-// 3. OPTIONAL BUT RECOMMENDED: Parse URL-encoded bodies (fixes issues if testing via Postman x-www-form-urlencoded)
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
-// 4. Database Connection
 mongoose
   .connect(process.env.MONGO_URI || 'mongodb://localhost:27017/career-chooser')
   .then(() => console.log('MongoDB Connected'))
@@ -56,20 +50,20 @@ app.use('/api/community', communityRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/mentor', mentorRoutes);
+app.use('/api/student', studentRoutes); // 🚨 MOUNTED HERE — fixes "Route not found: GET /api/student/mentors"
 app.use('/api/notifications', notificationRoutes);
+
+// Static file serving — CV downloads, chat media, avatars all live under /uploads
 app.use('/uploads', express.static('uploads'));
 
 app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'success', message: 'Server is running' });
 });
 
-// 404 for unmatched API routes
 app.use('/api', (req, res) => {
   res.status(404).json({ message: `Route not found: ${req.method} ${req.originalUrl}` });
 });
 
-// Centralized error handler — works with `next(error)` patterns in controllers
-// eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
   const statusCode = res.statusCode && res.statusCode !== 200 ? res.statusCode : 500;
   console.error(`[${req.method} ${req.originalUrl}]`, err.message);
@@ -81,8 +75,6 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 5000;
-
-// 🚨 MUST USE server.listen INSTEAD OF app.listen SO SOCKETS RUN 🚨
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

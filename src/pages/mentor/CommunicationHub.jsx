@@ -1,11 +1,16 @@
 // src/pages/mentor/CommunicationHub.jsx
+//
+// Adds a "+" button to the Messages tab that opens ConnectPicker — mentors
+// can now browse students and send connection invites too.
+
 import React, { useState, useEffect } from "react";
+import { UserPlus } from "lucide-react";
 import { Page, PageHead } from "../../components/common/Page.jsx";
 import ChatLayout from "../../components/chat/ChatLayout.jsx";
+import ConnectPicker from "../../components/chat/ConnectPicker.jsx";
 import api from "../../lib/axios.js";
 import s from "./CommunicationHub.module.css";
 
-// Keeps your existing Calendar UI unchanged
 function CalendarView({ sessions }) {
   const today = new Date();
   const year = today.getFullYear();
@@ -54,24 +59,85 @@ function CalendarView({ sessions }) {
 export default function CommunicationHub() {
   const [tab, setTab] = useState("chat");
   const [sessions, setSessions] = useState([]);
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   useEffect(() => {
-    api.get("/mentor/sessions")
-      .then(res => setSessions(res.data))
-      .catch(() => { });
+    api.get("/mentor/sessions").then((res) => setSessions(res.data)).catch(() => { });
   }, []);
 
   return (
     <Page>
-      <PageHead title="Communication Hub" subtitle="Chat securely with mentees and check your schedule." />
-      <div>
-        <div className={s.tabs} style={{ display: 'flex', gap: '16px', marginBottom: '24px', borderBottom: '1px solid var(--color-border)' }}>
-          <button style={{ background: 'none', border: 'none', borderBottom: tab === 'chat' ? '2px solid var(--color-primary)' : '2px solid transparent', padding: '12px 16px', color: tab === 'chat' ? 'var(--color-primary)' : 'var(--color-muted)', fontWeight: 600, cursor: 'pointer' }} onClick={() => setTab("chat")}>Messages</button>
-          <button style={{ background: 'none', border: 'none', borderBottom: tab === 'cal' ? '2px solid var(--color-primary)' : '2px solid transparent', padding: '12px 16px', color: tab === 'cal' ? 'var(--color-primary)' : 'var(--color-muted)', fontWeight: 600, cursor: 'pointer' }} onClick={() => setTab("cal")}>Calendar</button>
-        </div>
+      <PageHead
+        title="Communication Hub"
+        subtitle="Chat securely with mentees and check your schedule."
+        actions={
+          tab === "chat" ? (
+            <button
+              onClick={() => setPickerOpen(true)}
+              style={connectBtnStyle}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = "translateY(-1px)";
+                e.currentTarget.style.boxShadow = "0 8px 16px -4px rgba(13,148,136,0.45)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "";
+                e.currentTarget.style.boxShadow = "0 4px 12px -3px rgba(13,148,136,0.4)";
+              }}
+            >
+              <UserPlus size={16} />
+              <span>Find a student</span>
+            </button>
+          ) : null
+        }
+      />
 
-        {tab === "chat" ? <ChatLayout /> : <CalendarView sessions={sessions} />}
+      <div className={s.tabs} style={{ display: 'flex', gap: '16px', marginBottom: '24px', borderBottom: '1px solid var(--color-border)' }}>
+        <button
+          style={{
+            background: 'none', border: 'none',
+            borderBottom: tab === 'chat' ? '2px solid var(--color-primary)' : '2px solid transparent',
+            padding: '12px 16px',
+            color: tab === 'chat' ? 'var(--color-primary)' : 'var(--color-muted)',
+            fontWeight: 600, cursor: 'pointer',
+          }}
+          onClick={() => setTab("chat")}
+        >
+          Messages
+        </button>
+        <button
+          style={{
+            background: 'none', border: 'none',
+            borderBottom: tab === 'cal' ? '2px solid var(--color-primary)' : '2px solid transparent',
+            padding: '12px 16px',
+            color: tab === 'cal' ? 'var(--color-primary)' : 'var(--color-muted)',
+            fontWeight: 600, cursor: 'pointer',
+          }}
+          onClick={() => setTab("cal")}
+        >
+          Calendar
+        </button>
       </div>
+
+      {tab === "chat" ? <ChatLayout /> : <CalendarView sessions={sessions} />}
+
+      {pickerOpen && (
+        <ConnectPicker
+          onClose={() => setPickerOpen(false)}
+          onSent={() => { }}
+        />
+      )}
     </Page>
   );
 }
+
+const connectBtnStyle = {
+  display: "inline-flex", alignItems: "center", gap: 8,
+  padding: "10px 18px",
+  background: "linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%)",
+  color: "white", border: "none",
+  borderRadius: "var(--radius, 10px)",
+  fontSize: 14, fontWeight: 700,
+  cursor: "pointer", fontFamily: "inherit",
+  boxShadow: "0 4px 12px -3px rgba(13,148,136,0.4)",
+  transition: "all 0.18s ease",
+};

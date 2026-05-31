@@ -27,6 +27,7 @@ import StatCard from "../../components/common/StatCard.jsx";
 import Card from "../../components/common/Card.jsx";
 import Button from "../../components/common/Button.jsx";
 import Badge from "../../components/common/Badge.jsx";
+import Avatar from "../../components/common/Avatar.jsx";
 import api from "../../lib/axios.js";
 import s from "./MentorRequests.module.css";
 
@@ -293,13 +294,6 @@ function RequestCard({ request, animationDelay, busy, onAccept, onReject }) {
   const student = r.student || {};
   const isPending = r.status === "pending";
 
-  const initials = (student.name || "?")
-    .split(" ")
-    .map((p) => p[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
-
   return (
     <article
       className={`${s.requestCard} ${s[`statusBorder_${r.status}`]}`}
@@ -307,7 +301,7 @@ function RequestCard({ request, animationDelay, busy, onAccept, onReject }) {
     >
       <header className={s.cardHead}>
         <div className={s.studentRow}>
-          <div className={s.avatar}>{initials}</div>
+          <Avatar src={student.avatar} name={student.name} size={48} fontSize={16} />
           <div style={{ flex: 1, minWidth: 0 }}>
             <h3 className={s.studentName}>{student.name}</h3>
             <div className={s.studentMeta}>

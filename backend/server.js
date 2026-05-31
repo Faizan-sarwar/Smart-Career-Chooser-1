@@ -17,7 +17,8 @@ import messageRoutes from './src/routes/messageRoutes.js';
 import adminRoutes from './src/routes/adminRoutes.js';
 import mentorRoutes from './src/routes/mentorRoutes.js';
 import notificationRoutes from './src/routes/notificationRoutes.js';
-import studentRoutes from './src/routes/studentRoutes.js'; // 🚨 ADDED
+import studentRoutes from './src/routes/studentRoutes.js'; 
+import connectionRoutes from './src/routes/connectionRoutes.js';
 
 dotenv.config();
 
@@ -52,7 +53,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/mentor', mentorRoutes);
 app.use('/api/student', studentRoutes); // 🚨 MOUNTED HERE — fixes "Route not found: GET /api/student/mentors"
 app.use('/api/notifications', notificationRoutes);
-
+app.use('/api/connections', connectionRoutes); // 🚨 MOUNTED HERE — fixes "Route not found: GET /api/connections/browse"
 // Static file serving — CV downloads, chat media, avatars all live under /uploads
 app.use('/uploads', express.static('uploads'));
 

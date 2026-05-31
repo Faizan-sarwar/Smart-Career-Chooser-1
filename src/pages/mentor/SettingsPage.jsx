@@ -1,15 +1,17 @@
-// src/pages/student/SettingsPage.jsx
+// src/pages/mentor/SettingsPage.jsx
 //
-// Fixes vs previous version:
-//   - savePrefs now accepts an optional override so theme/language changes
-//     save the NEW value (previous code sent stale state from before the
-//     setState had committed)
-//   - savePrefs no longer requires a synthetic event (cleaner API)
+// Mentor-specific settings:
+//   - Notification toggles (separated: mentee messages, new request alerts,
+//     session reminders, weekly digest)
+//   - Availability toggle: "Accepting new mentees" master switch
+//   - Theme & language
+//   - Password (or Google-managed notice)
 
 import { useTheme } from "../../context/ThemeContext.jsx";
 import React, { useState, useEffect } from "react";
 import {
-  Bell, Lock, Palette, Globe, Trash2, Save, Loader2, AlertCircle,
+  Bell, Lock, Palette, Globe, Trash2, Save, Loader2,
+  AlertCircle, UserCheck,
 } from "lucide-react";
 import { Page } from "../../components/common/Page.jsx";
 import Card from "../../components/common/Card.jsx";
@@ -17,7 +19,7 @@ import { Field, Input, Select } from "../../components/common/Field.jsx";
 import Button from "../../components/common/Button.jsx";
 import { useAuth } from "../../context/AuthContext.jsx";
 import api from "../../lib/axios.js";
-import s from "./SettingsPage.module.css";
+import s from "../student/SettingsPage.module.css"; // reuse styles
 
 function Toggle({ checked, onChange, label, hint }) {
   return (
@@ -38,15 +40,21 @@ function Toggle({ checked, onChange, label, hint }) {
   );
 }
 
-export default function SettingsPage() {
+export default function MentorSettingsPage() {
   const { logout, user } = useAuth();
   const { theme, setTheme } = useTheme();
 
   const [prefs, setPrefs] = useState({
+    // Notifications
     emailNotif: true,
     pushNotif: false,
+    newRequestAlerts: true,
+    sessionReminders: true,
+    menteeMessages: true,
     weeklyDigest: true,
-    mentorMessages: true,
+    // Mentor-only
+    acceptingNewMentees: true,
+    // Locale
     theme: "system",
     language: "en",
   });
@@ -65,9 +73,6 @@ export default function SettingsPage() {
     }
   }, [user]);
 
-  // savePrefs now accepts an optional override (the new state to send).
-  // This avoids the React stale-state bug where calling savePrefs in the
-  // same tick as setPrefs sent the old value to the API.
   const savePrefs = async (override) => {
     const toSave = override ? { ...prefs, ...override } : prefs;
     setPrefsError("");
@@ -80,10 +85,8 @@ export default function SettingsPage() {
     }
   };
 
-  // Toggle handlers: update state AND save with the new value
   const setToggle = (key) => (value) => {
-    const next = { ...prefs, [key]: value };
-    setPrefs(next);
+    setPrefs((p) => ({ ...p, [key]: value }));
     savePrefs({ [key]: value });
   };
 
@@ -128,8 +131,18 @@ export default function SettingsPage() {
     <Page>
       <div className={s.head}>
         <h2>Settings</h2>
-        <p>Manage notifications, security, and appearance.</p>
+        <p>Manage your availability, notifications, and security.</p>
       </div>
+
+      {/* Mentor availability — top priority for this role */}
+      <Card title={<span className={s.cardTitle}><UserCheck size={16} /> Availability</span>}>
+        <Toggle
+          label="Accepting new mentees"
+          hint="When off, your profile is hidden from the 'Find a mentor' picker and you won't receive new requests."
+          checked={prefs.acceptingNewMentees}
+          onChange={setToggle("acceptingNewMentees")}
+        />
+      </Card>
 
       <Card title={<span className={s.cardTitle}><Bell size={16} /> Notifications</span>}>
         <form className={s.stack} onSubmit={handleSubmitPrefs}>
@@ -142,12 +155,24 @@ export default function SettingsPage() {
             checked={prefs.pushNotif} onChange={setToggle("pushNotif")}
           />
           <Toggle
-            label="Weekly digest" hint="A summary of your progress every Monday"
-            checked={prefs.weeklyDigest} onChange={setToggle("weeklyDigest")}
+            label="New mentor requests"
+            hint="Notify me when a student requests me as their mentor"
+            checked={prefs.newRequestAlerts} onChange={setToggle("newRequestAlerts")}
           />
           <Toggle
-            label="Mentor messages" hint="Notify me when a mentor replies"
-            checked={prefs.mentorMessages} onChange={setToggle("mentorMessages")}
+            label="Session reminders"
+            hint="Get a heads-up before scheduled mentoring sessions"
+            checked={prefs.sessionReminders} onChange={setToggle("sessionReminders")}
+          />
+          <Toggle
+            label="Mentee messages"
+            hint="Notify me when a mentee sends a message"
+            checked={prefs.menteeMessages} onChange={setToggle("menteeMessages")}
+          />
+          <Toggle
+            label="Weekly digest"
+            hint="A summary of your mentees' progress every Monday"
+            checked={prefs.weeklyDigest} onChange={setToggle("weeklyDigest")}
           />
           <div className={s.actions}>
             <Button type="submit">
@@ -170,9 +195,9 @@ export default function SettingsPage() {
               value={theme}
               onChange={(e) => {
                 const v = e.target.value;
-                setTheme(v);              // updates UI instantly
+                setTheme(v);
                 setPrefs((p) => ({ ...p, theme: v }));
-                savePrefs({ theme: v });  // sends the NEW value, not stale state
+                savePrefs({ theme: v });
               }}
             >
               <option value="system">System</option>
@@ -180,7 +205,7 @@ export default function SettingsPage() {
               <option value="dark">Dark</option>
             </Select>
           </Field>
-          {/* <Field label={
+          <Field label={
             <span style={{ display: "inline-flex", gap: 6, alignItems: "center" }}>
               <Globe size={14} /> Language
             </span>
@@ -196,7 +221,7 @@ export default function SettingsPage() {
               <option value="en">English</option>
               <option value="ur">Urdu (اردو)</option>
             </Select>
-          </Field> */}
+          </Field>
         </div>
       </Card>
 

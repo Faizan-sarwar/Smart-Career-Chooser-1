@@ -3,7 +3,7 @@ import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard, ClipboardList, Sparkles, Users, MessageSquare,
   ShieldCheck, UserCog, GraduationCap, Compass, TrendingUp, Map, CalendarDays,
-  ShieldAlert // Added for Admin Moderation
+  ShieldAlert
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext.jsx";
 import s from "./Sidebar.module.css";
@@ -23,7 +23,6 @@ const NAV = {
     { to: "/mentor/dashboard", label: "Dashboard", Icon: LayoutDashboard },
     { to: "/mentor/hub", label: "Communication", Icon: MessageSquare },
   ],
-  // 🚨 UPGRADED ADMIN SIDEBAR 🚨
   admin: [
     { to: "/admin/dashboard", label: "Overview", Icon: ShieldCheck },
     { to: "/admin/users", label: "User Management", Icon: UserCog },
@@ -39,7 +38,6 @@ export default function Sidebar({ mobileOpen, onClose }) {
   const { user } = useAuth();
   if (!user) return null;
 
-  // Ensure we safely map the role to lowercase to avoid crashes if formatting changes
   const safeRole = user.role?.toLowerCase() || 'student';
   const items = NAV[safeRole] || [];
   const RoleIcon = ROLE_ICON[safeRole] || ShieldCheck;
@@ -69,9 +67,21 @@ export default function Sidebar({ mobileOpen, onClose }) {
       <div className={s.spacer} />
       <div className={s.foot}>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-          <div style={{ width: '32px', height: '32px', borderRadius: '50%', overflow: 'hidden', backgroundColor: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '12px', fontWeight: 'bold' }}>
+          <div style={{
+            width: '32px', height: '32px', borderRadius: '50%',
+            overflow: 'hidden', backgroundColor: 'var(--color-primary)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: 'white', fontSize: '12px', fontWeight: 'bold',
+            flexShrink: 0,
+          }}>
             {user?.avatar && user.avatar.length > 10 ? (
-              <img src={user.avatar} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <img
+                src={user.avatar}
+                alt="Profile"
+                referrerPolicy="no-referrer"  // 🔑 fix: Google blocks localhost referrer
+                onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
             ) : (
               (user?.name || "U").charAt(0).toUpperCase()
             )}

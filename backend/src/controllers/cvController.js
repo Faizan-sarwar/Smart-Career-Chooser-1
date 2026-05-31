@@ -126,3 +126,41 @@ export const getMyCV = async (req, res, next) => {
     next(err);
   }
 };
+// @desc    Student views own CV in a new tab
+// @route   GET /api/student/cv/view
+// @access  Private (Student)
+export const viewMyCV = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user._id).select('cv name').lean();
+    if (!user) {
+      res.status(404);
+      throw new Error('User not found');
+    }
+
+    // cv may be stored as string path OR as object {filePath, fileName}
+    const cvPath = typeof user.cv === 'string'
+      ? user.cv.trim()
+      : (user.cv?.filePath || '').trim();
+
+    if (!cvPath) {
+      res.status(404);
+      throw new Error('You have not uploaded a CV yet');
+    }
+
+    const absolute = path.resolve(cvPath);
+    if (!fs.existsSync(absolute)) {
+      res.status(404);
+      throw new Error('CV file is missing from server');
+    }
+
+    const fileName = (typeof user.cv === 'object' && user.cv?.fileName)
+      || cvPath.split('/').pop()
+      || 'cv.pdf';
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="${fileName}"`);
+    res.sendFile(absolute);
+  } catch (err) {
+    next(err);
+  }
+};

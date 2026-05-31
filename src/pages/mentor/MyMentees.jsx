@@ -23,6 +23,7 @@ import { Page, PageHead } from "../../components/common/Page.jsx";
 import Card from "../../components/common/Card.jsx";
 import Button from "../../components/common/Button.jsx";
 import Badge from "../../components/common/Badge.jsx";
+import Avatar from "../../components/common/Avatar.jsx";
 import { Select } from "../../components/common/Field.jsx";
 import api from "../../lib/axios.js";
 import s from "./MyMentees.module.css";
@@ -168,14 +169,11 @@ export default function MyMentees() {
                 <tr key={m.id} onClick={() => openDetail(m.id)} className={s.row}>
                   <td>
                     <div className={s.menteeName}>
-                      <div className={s.avatar}>
-                        {m.name
-                          .split(" ")
-                          .map((p) => p[0])
-                          .slice(0, 2)
-                          .join("")
-                          .toUpperCase()}
-                      </div>
+                      <Avatar
+                        src={m.avatar}
+                        name={m.name}
+                        size={36}
+                      />
                       <div>
                         <div className={s.nameText}>{m.name}</div>
                         <div className={s.emailText}>{m.email}</div>
@@ -244,23 +242,6 @@ export default function MyMentees() {
 function MenteeDetailDrawer({ detail, loading, onClose }) {
   const navigate = useNavigate();
 
-  // Fetch the CV through authenticated axios, then open the PDF blob
-  // in a new tab. A plain <a href> would 401 since the route is protected.
-  const handleViewCV = async (menteeId) => {
-    try {
-      const response = await api.get(`/mentor/mentees/${menteeId}/cv`, {
-        responseType: "blob",
-      });
-      const url = window.URL.createObjectURL(
-        new Blob([response.data], { type: "application/pdf" })
-      );
-      window.open(url, "_blank");
-      setTimeout(() => window.URL.revokeObjectURL(url), 10000);
-    } catch (err) {
-      alert(err.response?.data?.message || "Failed to load CV");
-    }
-  };
-
   if (loading) {
     return (
       <div className={s.scrim} onClick={onClose}>
@@ -286,14 +267,12 @@ function MenteeDetailDrawer({ detail, loading, onClose }) {
         </button>
 
         <header className={s.detailHead}>
-          <div className={s.bigAvatar}>
-            {m.name
-              ?.split(" ")
-              .map((p) => p[0])
-              .slice(0, 2)
-              .join("")
-              .toUpperCase()}
-          </div>
+          <Avatar
+            src={m.avatar}
+            name={m.name}
+            size={72}
+            fontSize={24}
+          />
           <div style={{ flex: 1, minWidth: 0 }}>
             <h2 className={s.detailName}>{m.name}</h2>
             <div className={s.detailMeta}>
@@ -326,7 +305,7 @@ function MenteeDetailDrawer({ detail, loading, onClose }) {
         </header>
 
         <div className={s.detailBody}>
-          {/* 🚨 QUICK ACTIONS WITH CV BUTTON 🚨 */}
+          {/* 🚨 UPDATED QUICK ACTIONS WITH CV BUTTON 🚨 */}
           <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '8px' }}>
             <Button
               variant="accent"
@@ -339,25 +318,23 @@ function MenteeDetailDrawer({ detail, loading, onClose }) {
               <CalendarPlus size={14} /> Schedule a session
             </Button>
 
-            {/* Show only if the student uploaded a CV. Fetch via authed
-                axios → blob → open in new tab (a plain <a> would 401). */}
+            {/* Only show if the student has uploaded a CV. Use authed
+                axios → blob → new tab (plain <a> would 401). */}
             {m.hasCv && (
-              <Button variant="secondary" onClick={() => handleViewCV(m.id)}>
+              <Button variant="secondary" onClick={async () => {
+                try {
+                  const resp = await api.get(`/mentor/mentees/${m.id}/cv`, { responseType: "blob" });
+                  const url = window.URL.createObjectURL(new Blob([resp.data], { type: "application/pdf" }));
+                  window.open(url, "_blank");
+                  setTimeout(() => window.URL.revokeObjectURL(url), 10000);
+                } catch (err) {
+                  alert(err.response?.data?.message || "Failed to load CV");
+                }
+              }}>
                 <FileText size={14} /> View Resume
               </Button>
             )}
           </div>
-
-          {/* CV status line */}
-          {m.hasCv ? (
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 16, fontSize: 12, color: 'var(--color-success, #16a34a)', fontWeight: 600 }}>
-              <FileText size={12} /> CV on file{m.cvFileName ? ` · ${m.cvFileName}` : ''}
-            </div>
-          ) : (
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 16, fontSize: 12, color: 'var(--color-muted)', fontStyle: 'italic' }}>
-              <FileText size={12} /> No CV uploaded yet
-            </div>
-          )}
 
           {/* Assessment */}
           <section className={s.detailSection}>

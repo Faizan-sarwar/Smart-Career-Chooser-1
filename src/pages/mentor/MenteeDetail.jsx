@@ -17,6 +17,7 @@ import Card from "../../components/common/Card.jsx";
 import Badge from "../../components/common/Badge.jsx";
 import Button from "../../components/common/Button.jsx";
 import ProgressBar from "../../components/common/ProgressBar.jsx";
+import Avatar from "../../components/common/Avatar.jsx";
 import api from "../../lib/axios.js";
 import s from "./MenteeDetail.module.css";
 
@@ -120,9 +121,7 @@ export default function MenteeDetail() {
       />
 
       <div className={s.header} style={{ display: 'flex', alignItems: 'center', gap: '20px', padding: '24px', background: 'var(--glass-bg)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--glass-border)', marginBottom: '24px' }}>
-        <div className={s.avatar} style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'var(--color-primary)', color: '#fff', display: 'grid', placeItems: 'center', fontSize: '24px', fontWeight: 800 }}>
-          {mentee.name.split(" ").map((x) => x[0]).slice(0, 2).join("").toUpperCase()}
-        </div>
+        <Avatar src={mentee.avatar} name={mentee.name} size={64} fontSize={24} />
         <div className={s.info} style={{ flex: 1 }}>
           <div className={s.name} style={{ fontSize: '24px', fontWeight: 800 }}>{mentee.name}</div>
           <div className={s.meta} style={{ color: 'var(--color-muted)', fontSize: '14px' }}>{mentee.program || "Student"} · Last active {mentee.lastActiveLabel || "recently"}</div>

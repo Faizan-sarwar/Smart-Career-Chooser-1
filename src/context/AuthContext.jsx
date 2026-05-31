@@ -1,12 +1,11 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
-import api from "../lib/axios.js"; // Connecting to our Axios instance
+import api from "../lib/axios.js";
 
 const AuthContext = createContext(null);
 const USER_KEY = "cc.user";
 const TOKEN_KEY = "token";
 
 export function AuthProvider({ children }) {
-  // Initialize user from local storage to prevent data (like avatars) from clearing on refresh
   const [user, setUser] = useState(() => {
     if (typeof window === "undefined") return null;
     try {
@@ -16,7 +15,6 @@ export function AuthProvider({ children }) {
     }
   });
 
-  // Sync user object to local storage whenever it changes
   useEffect(() => {
     if (user) {
       localStorage.setItem(USER_KEY, JSON.stringify(user));
@@ -25,29 +23,21 @@ export function AuthProvider({ children }) {
     }
   }, [user]);
 
-  // Connects to POST /api/auth/login
-  // No longer makes the API call. Just saves the data passed from LoginPage/RegisterPage!
   const login = (data, token) => {
-    // Save the secure token for future requests
     localStorage.setItem(TOKEN_KEY, token);
 
-    // Save user data (including their specific role and avatar) to global state
     setUser({
       id: data._id,
       email: data.email,
       name: data.name,
-      role: data.role.toLowerCase(), // Ensure role is lowercase for frontend routing
+      role: data.role.toLowerCase(),
       avatar: data.avatar,
+      authProvider: data.authProvider || 'local'
     });
   };
 
-  // Connects to POST /api/auth/register
   const register = async (userData) => {
-    // 1. Create the account in the backend
     await api.post("/auth/register", userData);
-
-    // 🚨 SECURE FIX: We deliberately DO NOT save the token to localStorage 
-    // or set the User state here. This prevents the auto-login.
   };
 
   const logout = () => {
@@ -55,10 +45,21 @@ export function AuthProvider({ children }) {
     setUser(null);
   };
 
-  const updateProfile = (patch) => setUser((u) => (u ? { ...u, ...patch } : u));
+  const updateProfile = (updates) => {
+    setUser((prev) => {
+      const next = { ...prev, ...updates };
+      // CRITICAL: sync to localStorage so refresh shows new data
+      try {
+        localStorage.setItem('cc.user', JSON.stringify(next));
+      } catch (e) {
+        console.error('[AuthContext] Failed to persist user:', e);
+      }
+      return next;
+    });
+  };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, updateProfile }}>
+    <AuthContext.Provider value={{ user, login, logout, register, updateProfile }}>
       {children}
     </AuthContext.Provider>
   );

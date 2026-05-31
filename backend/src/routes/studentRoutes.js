@@ -12,6 +12,7 @@ import {
   uploadCV,
   deleteCV,
   getMyCV,
+  viewMyCV
 } from '../controllers/cvController.js';
 import { protect, authorize } from '../middlewares/authMiddleware.js';
 import { cvUpload } from '../middlewares/cvUploadMiddleware.js';
@@ -30,6 +31,7 @@ router.delete('/mentor-requests/:id', cancelRequest);
 // CV upload/manage
 router.get('/cv', getMyCV);
 router.post('/cv', cvUpload.single('cv'), uploadCV);
+router.get('/cv/view', viewMyCV); 
 router.delete('/cv', deleteCV);
 
 export default router;

@@ -32,6 +32,7 @@ import StatCard from "../../components/common/StatCard.jsx";
 import Card from "../../components/common/Card.jsx";
 import Button from "../../components/common/Button.jsx";
 import Badge from "../../components/common/Badge.jsx";
+import Avatar from "../../components/common/Avatar.jsx";
 import api from "../../lib/axios.js";
 import { useAuth } from "../../context/AuthContext.jsx";
 import s from "./MentorDashboard.module.css";
@@ -189,14 +190,7 @@ export default function MentorDashboard() {
             <ul className={s.actionList}>
               {needsAttention.slice(0, 5).map((m) => (
                 <li key={m.id} className={s.actionItem}>
-                  <div className={s.actionAvatar}>
-                    {m.name
-                      .split(" ")
-                      .map((p) => p[0])
-                      .slice(0, 2)
-                      .join("")
-                      .toUpperCase()}
-                  </div>
+                  <Avatar src={m.avatar} name={m.name} size={36} fontSize={12} />
                   <div className={s.actionBody}>
                     <div className={s.actionName}>{m.name}</div>
                     <div className={s.actionReason}>
@@ -210,8 +204,8 @@ export default function MentorDashboard() {
                       m.status === "onboarding"
                         ? "warning"
                         : m.status === "inactive"
-                        ? "danger"
-                        : "accent"
+                          ? "danger"
+                          : "accent"
                     }
                   >
                     {m.statusDisplay}
@@ -235,14 +229,7 @@ export default function MentorDashboard() {
             <ul className={s.recentList}>
               {recentlyAssessed.map((m) => (
                 <li key={m.id} className={s.recentItem}>
-                  <div className={s.actionAvatar}>
-                    {m.name
-                      .split(" ")
-                      .map((p) => p[0])
-                      .slice(0, 2)
-                      .join("")
-                      .toUpperCase()}
-                  </div>
+                  <Avatar src={m.avatar} name={m.name} size={36} fontSize={12} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div className={s.recentName}>{m.name}</div>
                     <div className={s.recentMeta}>
@@ -326,14 +313,7 @@ export default function MentorDashboard() {
           {mentees.slice(0, 6).map((m) => (
             <div key={m.id} className={s.menteeRow}>
               <span className={s.menteeName}>
-                <div className={s.actionAvatar}>
-                  {m.name
-                    .split(" ")
-                    .map((p) => p[0])
-                    .slice(0, 2)
-                    .join("")
-                    .toUpperCase()}
-                </div>
+                <Avatar src={m.avatar} name={m.name} size={32} fontSize={11} />
                 {m.name}
               </span>
               <span className={s.muted}>{m.program}</span>
@@ -352,10 +332,10 @@ export default function MentorDashboard() {
                     m.status === "excelling"
                       ? "success"
                       : m.status === "active"
-                      ? "primary"
-                      : m.status === "inactive"
-                      ? "danger"
-                      : "warning"
+                        ? "primary"
+                        : m.status === "inactive"
+                          ? "danger"
+                          : "warning"
                   }
                 >
                   {m.statusDisplay}

@@ -4,6 +4,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import {
   GraduationCap, Mail, Lock, AlertCircle, Sparkles, Eye, EyeOff, Check, Loader2,
 } from "lucide-react";
+import GoogleAuthButton from "../../components/auth/GoogleAuthButton.jsx";
 import Button from "../../components/common/Button.jsx";
 import { Field, Input } from "../../components/common/Field.jsx";
 import { useAuth } from "../../context/AuthContext.jsx";
@@ -164,6 +165,10 @@ export default function LoginPage() {
             </div>
 
             {error && <div className={s.errorBox} role="alert"><AlertCircle size={14} /> {error}</div>}
+            <div className={s.divider}>
+              <span>or continue with</span>
+            </div>
+            <GoogleAuthButton label="Sign in with Google" />
 
             <Button type="submit" variant="primary" size="lg" disabled={loading || !formValid}>
               {loading ? <><Loader2 size={16} className="spin" /> Signing in…</> : "Sign in"}

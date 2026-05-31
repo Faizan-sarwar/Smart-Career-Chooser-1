@@ -1,8 +1,11 @@
 // src/components/layout/Topbar.jsx
 //
-// REWIRED — no more local fetching/polling. Reads from NotificationContext
-// which lives at the app root and only fetches ONCE. Topbar may remount
-// across routes, but state survives because it's held in context.
+// Avatar rendering hardened:
+//   - Falls back to initials if the image fails to load (Google sometimes
+//     403s when profile pic privacy is set high)
+//   - referrerPolicy="no-referrer" so Google doesn't reject the request
+//     due to localhost referrer
+//   - Diagnostic log so we can see what user.avatar is on every render
 
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -39,6 +42,10 @@ export default function Topbar({ onMenuClick }) {
 
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [notifMenuOpen, setNotifMenuOpen] = useState(false);
+  const [avatarBroken, setAvatarBroken] = useState(false);
+
+  // 🔎 Diagnostic: prints what we see on every render
+  console.log("[Topbar] user.avatar =", user?.avatar);
 
   const role = (user?.role || "student").toLowerCase();
   const initials = (user?.name || "U").split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase();
@@ -52,9 +59,27 @@ export default function Topbar({ onMenuClick }) {
     if (n.link) navigate(n.link);
   };
 
+  // Avatar source — anything reasonably URL-shaped counts
+  const hasAvatar = !!user?.avatar && /^https?:\/\//.test(user.avatar) && !avatarBroken;
+
   const renderAvatarFace = () => {
-    if (user?.avatar && user.avatar.length > 10) {
-      return <img src={user.avatar} alt="Profile" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "inherit" }} />;
+    if (hasAvatar) {
+      return (
+        <img
+          src={user.avatar}
+          alt={user.name || "Profile"}
+          referrerPolicy="no-referrer"  // 🔑 Google requires this for localhost
+          onError={() => {
+            console.warn("[Topbar] Avatar image failed to load:", user.avatar);
+            setAvatarBroken(true);
+          }}
+          style={{
+            width: "100%", height: "100%",
+            objectFit: "cover", borderRadius: "inherit",
+            display: "block",
+          }}
+        />
+      );
     }
     return <span style={{ fontSize: "14px", fontWeight: "bold", color: "white" }}>{initials}</span>;
   };
@@ -84,7 +109,7 @@ export default function Topbar({ onMenuClick }) {
             const next = !notifMenuOpen;
             setNotifMenuOpen(next);
             setUserMenuOpen(false);
-            if (next) refresh(); // pull latest when dropdown opens
+            if (next) refresh();
           }}
           style={{ position: "relative", zIndex: 50 }}
         >
@@ -207,7 +232,10 @@ export default function Topbar({ onMenuClick }) {
             <div className={s.name}>{user?.name}</div>
             <div className={s.role}>{role}</div>
           </div>
-          <div className={s.avatar} style={{ overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, backgroundColor: "var(--color-primary)" }}>
+          <div className={s.avatar} style={{
+            overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center",
+            padding: 0, backgroundColor: "var(--color-primary)",
+          }}>
             {renderAvatarFace()}
           </div>
         </div>

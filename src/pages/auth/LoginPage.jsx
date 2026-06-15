@@ -168,7 +168,7 @@ export default function LoginPage() {
             <div className={s.divider}>
               <span>or continue with</span>
             </div>
-            <GoogleAuthButton label="Sign in with Google" />
+            {/* <GoogleAuthButton label="Sign in with Google" /> */}
 
             <Button type="submit" variant="primary" size="lg" disabled={loading || !formValid}>
               {loading ? <><Loader2 size={16} className="spin" /> Signing in…</> : "Sign in"}

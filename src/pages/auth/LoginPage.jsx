@@ -165,9 +165,9 @@ export default function LoginPage() {
             </div>
 
             {error && <div className={s.errorBox} role="alert"><AlertCircle size={14} /> {error}</div>}
-            <div className={s.divider}>
+            {/* <div className={s.divider}>
               <span>or continue with</span>
-            </div>
+            </div> */}
             {/* <GoogleAuthButton label="Sign in with Google" /> */}
 
             <Button type="submit" variant="primary" size="lg" disabled={loading || !formValid}>

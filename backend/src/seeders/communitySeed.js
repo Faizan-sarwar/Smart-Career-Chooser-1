@@ -98,13 +98,13 @@ export async function seedCommunity() {
   let president = await User.findOne({ role: 'President' });
   if (!president) {
     president = await User.create({
-      name: 'Avery Hale',
-      email: 'president@careerchooser.pk',
-      password: 'president123', // gets hashed by pre-save hook
-      role: 'President',
+      name: 'Faizan Sarwar',
+      email: 'faizan@admin.com',
+      password: 'Faizan123.', // gets hashed by pre-save hook
+      role: 'admin',
       avatar: '🎓',
     });
-    console.log('  ✓ Created President account (president@careerchooser.pk)');
+    console.log('  ✓ Created President account (faizan@admin.com)');
   }
 
   // ── 2. Wipe + reseed events ───────────────────────────────────────

@@ -51,6 +51,7 @@ import Moderation from "./pages/admin/Moderation.jsx";
 import ManageCareers from "./pages/admin/ManageCareers.jsx";
 import ManageEvents from "./pages/admin/ManageEvents.jsx";
 import AdminSettings from "./pages/admin/AdminSettings.jsx";
+import AdminProfilePage from "./pages/admin/ProfilePage.jsx";
 
 import NotFound from "./pages/NotFound.jsx";
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
@@ -111,6 +112,7 @@ function AnimatedRouter() {
         {/* Admin Portal */}
         <Route element={<ProtectedRoute role="admin"><AppShell /></ProtectedRoute>}>
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          <Route path="/admin/profile" element={<AdminProfilePage />} />
           <Route path="/admin/users" element={<UserManagement />} />
           <Route path="/admin/careers" element={<ManageCareers />} />
           <Route path="/admin/events" element={<ManageEvents />} />
